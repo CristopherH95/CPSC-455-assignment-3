@@ -1,0 +1,25 @@
+{
+  "name": "cpsc-455-assignment-2",
+  "version": "1.0.0",
+  "description": "Secure banking web app for CPSC-455 Web Security",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Security",
+    "Web",
+    "CPSC455",
+    "CPSC",
+    "CSUF",
+    "JavaScript",
+    "OWASP"
+  ],
+  "author": "Cristopher Hernandez",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4",
+    "xml2js": "^0.4.19",
+    "xss-filters": "^1.2.7"
+  }
+}
