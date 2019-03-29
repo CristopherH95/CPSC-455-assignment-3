@@ -5,19 +5,37 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Bank of Banksville</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
     <!-- TODO: Styling for login page, backend logic, authentication -->
     <!-- TODO: Accounts view, banking logic -->
-    <div>
-        <form method="POST" action="/login">
-            <label for="user-name-in">Username:</label>
-            <input type="text" id="user-name-in">
-            <label for="user-pass-in">Password:</label>
-            <input type="password" id="user-pass-in">
-            <button type="submit">Login</button>
-        </form>
-        <a href="/create-user">Don't have an account?</a>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <h1>The Bank of Banksville</h1>
+        </div>
+        <div class="row justify-content-center">
+            <h3 class="text-muted">The best bank to do your banking with, you can bank on it.</h2>
+        </div>
+        <div class="row">
+            <div class="text-center col-md-2 offset-md-5">
+                <div class="jumbotron">
+                    <h4>Customer Login</h4>
+                    <form method="POST" action="/login">
+                        <div class="form-group">
+                            <label for="user-name-in">Username:</label>
+                            <input type="text" class="form-control" id="user-name-in">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-pass-in">Password:</label>
+                            <input type="password" class="form-control" id="user-pass-in">
+                        </div>
+                        <button class="btn btn-primary" type="submit">Login</button>
+                    </form>
+                    <a href="/create-user">Don't have an account?</a>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
