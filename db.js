@@ -83,7 +83,7 @@ var db = Object.defineProperties(
             value: dbConnect.prepare("UPDATE bank_user_accounts SET balance=? WHERE account_id=?")
         },
         close: {
-            value: function() {
+            value: function(callback) {
                 // Finalize all prepared statements
                 this.getUserQuery.finalize();
                 this.getAllAccountsQuery.finalize();
@@ -93,7 +93,7 @@ var db = Object.defineProperties(
                 this.insertAccountQuery.finalize();
                 this.updateAccountQuery.finalize();
                 // Close database connection
-                this.connection.close();
+                this.connection.close(callback);
             }
         },
         getUser: {

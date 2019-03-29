@@ -15,12 +15,18 @@ app.get('/', (req, resp) => {
     resp.sendFile(__dirname + '/views/index.html');
 });
 
-server = app.listen(3000);
+var server = app.listen(3000);
 
 process.on('SIGINT', () => {
     console.log('Shutting down...');
-    db.close();
-    console.log('Closed database');
-    server.close();
-    console.log('Stopped server');
+    db.close((err) => {
+        if (err) {
+            console.log(err);
+            console.log('Could not close database');
+        } else {
+            console.log('Closed database');
+        }
+        server.close();
+        console.log('Stopped server');
+    });
 });
