@@ -211,12 +211,12 @@ var db = Object.defineProperties(
         validateUser: {
             value: function(user_id, password) {
                 return new Promise(function(resolve, reject) {
-                    this.getUserPassQuery.get(user_id, (err, row) => {
+                    this.getUserPassQuery.get(user_id, (err, row) => {  // run query to get the user's hashed password
                         if (err) {
-                            reject(err);
+                            reject(err);    // failed, reject promise
                         } else {
-                            bcrypt.compare(password, row.pass).then((res) => {
-                                resolve(res);
+                            bcrypt.compare(password, row.pass).then((res) => {  // compare password hash
+                                resolve(res);   // resolve promise with result of comparison
                             });
                         }
                     });
