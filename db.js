@@ -51,6 +51,7 @@ if (!fs.existsSync(dbPath)) {
  * @property {function} insertAccount Inserts a new bank account
  * @property {function} updateAccount Updates a bank account's balance
  * @property {function} getAccountTypes Gets all possible bank account types
+ * @property {function} validateUser Checks if the given user id and password combo is valid in the database
  */
 var db = Object.defineProperties(
     // define properties for prepared SQL queries, functions for handling the database
@@ -63,6 +64,9 @@ var db = Object.defineProperties(
         },
         getUserQuery: {
             value: dbConnect.prepare("SELECT user_id, first_name, last_name, street, city, country_state, country FROM bank_users WHERE user_id=?")
+        },
+        getUserPassQuery: {
+            value: dbConnect.prepare("SELECT pass FROM bank_users WHERE user_id=?")
         },
         getAllAccountsQuery: {
             value: dbConnect.prepare("SELECT account_id, bank_user_id, account_type, balance FROM bank_user_accounts WHERE bank_user_id=?")
@@ -202,6 +206,21 @@ var db = Object.defineProperties(
                 });
             },
             enumerable: true
+        },
+        validateUser: {
+            value: function(user_id, password) {
+                return new Promise(function(resolve, reject) {
+                    this.getUserPassQuery.get(user_id, (err, row) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            bcrypt.compare(password, row.pass).then((res) => {
+                                resolve(res);
+                            });
+                        }
+                    });
+                });
+            }
         }
     }
 );
