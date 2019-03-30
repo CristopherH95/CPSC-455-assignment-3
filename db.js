@@ -90,6 +90,7 @@ var db = Object.defineProperties(
             value: function(callback) {
                 // Finalize all prepared statements
                 this.getUserQuery.finalize();
+                this.getUserPassQuery.finalize();
                 this.getAllAccountsQuery.finalize();
                 this.getAccountQuery.finalize();
                 this.getAccountTypesQuery.finalize();
