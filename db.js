@@ -1,44 +1,13 @@
-const fs = require('fs');
 const sqlite3 = require('sqlite3');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const dbPath = './data/database.sqlite3';
-const dbSetupFile = './data/model.sql';
-var dbConnect = null;
 
-if (!fs.existsSync(dbPath)) {
-    dbConnect = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            throw err;
-        }
-        console.log('Setting up database...');
-        let setupQueries = fs.readFileSync(dbSetupFile, 'utf8');
-        // let setupQueries = JSON.parse(dbJson);
-        dbConnect.serialize(() => {
-            // run each query for initial setup
-            // the error handler will attempt to delete the half complete database file if something goes wrong
-            dbConnect.exec(setupQueries, (err) => {
-                if (err) {
-                    fs.unlink(dbPath, (fErr) => {
-                        console.error('Failed to run query in initial setup, removing incomplete database file.');
-                        if (fErr) {
-                            throw fErr;
-                        }
-                    });
-                    throw err;
-                }
-            });
-        });
-        console.log("Finished setup")
-    });
-
-} else {
-    dbConnect = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            throw err;
-        }
-    });
-}
+var dbConnect = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        throw err;
+    }
+});
 
 /**
  * @namespace db namespace provides functions for abstracting database operations, internally uses prepared statements for queries
@@ -103,8 +72,9 @@ var db = Object.defineProperties(
         },
         getUser: {
             value: function(user_id) {
+                let getUserQuery = this.getUserQuery;   // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.getUserQuery.get(user_id, (err, row) => {  // run query to get user and get row
+                    getUserQuery.get(user_id, (err, row) => {  // run query to get user and get row
                         if (err) {  
                             reject(err);    // failed, reject promise
                         } else {
@@ -117,8 +87,9 @@ var db = Object.defineProperties(
         },
         getUserAccounts: {
             value: function(user_id) {
+                let getAllAccountsQuery = this.getAllAccountsQuery; // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.getAllAccountsQuery.all(user_id, (err, rows) => {   // run query to get all of a user's accounts
+                    getAllAccountsQuery.all(user_id, (err, rows) => {   // run query to get all of a user's accounts
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
@@ -131,8 +102,9 @@ var db = Object.defineProperties(
         },
         getAccount: {
             value: function(account_id) {
+                let getAccountQuery = this.getAccountQuery; // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.getAccountQuery.get(account_id, (err, row) => {    // run query to get a specific account
+                    getAccountQuery.get(account_id, (err, row) => {    // run query to get a specific account
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
@@ -145,7 +117,7 @@ var db = Object.defineProperties(
         },
         insertUser: {
             value: function(userObj) {
-                insertQuery = this.insertUserQuery; // the context of 'this' may change, so get a reference to the query here
+                let insertQuery = this.insertUserQuery; // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
                     bcrypt.hash(userObj.pass, saltRounds, (hErr, hash) => { // hash the user password
                         if (hErr) {
@@ -168,8 +140,9 @@ var db = Object.defineProperties(
         },
         insertAccount: {
             value: function(accountObj) {
+                let insertAccountQuery = this.insertAccountQuery;   // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.insertAccountQuery.run(accountObj.bank_user_id, accountObj.account_type, accountObj.balance, (err) => {    // run query to insert account
+                    insertAccountQuery.run(accountObj.bank_user_id, accountObj.account_type, accountObj.balance, (err) => {    // run query to insert account
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
@@ -182,8 +155,9 @@ var db = Object.defineProperties(
         },
         updateAccount: {
             value: function(account_id, new_balance) {
+                let updateAccountQuery = this.updateAccountQuery;   // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.updateAccountQuery.run(account_id, new_balance, (err) => {    // run query to update account
+                    updateAccountQuery.run(account_id, new_balance, (err) => {    // run query to update account
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
@@ -196,8 +170,9 @@ var db = Object.defineProperties(
         },
         getAccountTypes: {
             value: function() {
+                let getAccountTypesQuery = this.getAccountTypesQuery;   // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.getAccountTypesQuery.all((err, rows) => {   // run query to get all possible account types
+                    getAccountTypesQuery.all((err, rows) => {   // run query to get all possible account types
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
@@ -210,8 +185,9 @@ var db = Object.defineProperties(
         },
         validateUser: {
             value: function(user_id, password) {
+                let getUserPassQuery = this.getUserPassQuery;   // the context of 'this' may change, so get a reference to the query here
                 return new Promise(function(resolve, reject) {
-                    this.getUserPassQuery.get(user_id, (err, row) => {  // run query to get the user's hashed password
+                    getUserPassQuery.get(user_id, (err, row) => {  // run query to get the user's hashed password
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
