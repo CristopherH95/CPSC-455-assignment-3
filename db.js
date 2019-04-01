@@ -191,9 +191,13 @@ var db = Object.defineProperties(
                         if (err) {
                             reject(err);    // failed, reject promise
                         } else {
-                            bcrypt.compare(password, row.pass).then((res) => {  // compare password hash
-                                resolve(res);   // resolve promise with result of comparison
-                            });
+                            if (row) {
+                                bcrypt.compare(password, row.pass).then((res) => {  // compare password hash
+                                    resolve(res);   // resolve promise with result of comparison
+                                });
+                            } else {
+                                resolve(false); // couldn't find any info, the user may not exist
+                            }
                         }
                     });
                 });
