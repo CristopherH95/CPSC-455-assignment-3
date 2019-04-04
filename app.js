@@ -4,6 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const sessions = require('client-sessions');
 const verify = require('./verify');
+const xml2js = require('xml2js');
 
 var app = express();
 
@@ -29,7 +30,7 @@ app.use(sessions({
 app.use((req, resp, next) => {
     console.log('Received ' + req.method + ' request for ' + req.originalUrl);
     if (req.body) {
-        console.log('Request has content:\n' + req.body);
+        console.log('Request has content:\n' + JSON.stringify(req.body));
     }
     next();
 });
@@ -52,6 +53,9 @@ app.post('/login', (req, resp) => {
     if (req.body.username !== undefined && req.body.password !== undefined) {
         var userName = req.body.username;
         var password = req.body.password;
+    }
+    if (!verify.userNameNoDb(userName).result || !verify.password(password).result) {
+        // TODO: return response for when input is bad
     }
     db.validateUser(userName, password).then((result) => {
         if (result === true) {

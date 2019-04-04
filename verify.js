@@ -3,6 +3,7 @@
  * indicating whether the input should be valid, and 'reason' is a string explaining why input is invalid (if applicable)
  * @namespace verify defines functions for verifying user input data for various database fields
  * @property {function} userName checks if the given username is alphanumeric and does not already exist
+ * @property {function} userNameNoDb checks if a given username is alphanumeric, but does not check the database
  * @property {function} address checks if the given address contains only numbers, letters, "." and spaces
  * @property {function} name checks if the given name (first or last) contains only letters, "'", ".", and "-", and verifies there are not consecutive "-"
  * @property {function} city checks if the given city contains only alphabetical symbols, "'", ",", ".", and "-"
@@ -16,7 +17,7 @@ var verify = {
      * 
      * @param {string} input the input value for the user name
      * @param {object} db a database object with the methods/connection needed to check the database
-     * @returns {Promise<{input: boolean, reason: string}>} a promise indicating if the username is valid to be used
+     * @returns {Promise<{result: boolean, reason: string}>} a promise indicating if the username is valid to be used
      */
     userName: async function(input, db) {
         if (typeof(input) !== 'string') {
@@ -35,6 +36,20 @@ var verify = {
         } catch {
             return {result: false, reason: 'Encountered error while checking username'};
         }
+    },
+    /**
+     * 
+     * @param {string} input the input value for the user name
+     * @returns {{result: boolean, reason: string}} a promise indicating if the username is valid to be used
+     */
+    userNameNoDb: function(input) {
+        if (typeof(input) !== 'string') {
+            return {result: false, reason: 'Username must be a string of characters'};
+        }
+        if (!/^([a-z0-9]){1,35}$/i.test(uName)) {
+            return {result: false, reason: 'Username must be alphanumeric and be between 1 and 35 characters in length'};
+        }
+        return {result: true, reason: ''};
     },
     /**
      * 

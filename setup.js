@@ -12,7 +12,6 @@ if (!fs.existsSync(dbPath)) {
         let setupQueries = fs.readFileSync(dbSetupFile, 'utf8');
         console.log('Initial database setup queries:');
         console.log(setupQueries);
-        // let setupQueries = JSON.parse(dbJson);
         dbConnect.serialize(() => {
             // run each query for initial setup
             // the error handler will attempt to delete the half complete database file if something goes wrong

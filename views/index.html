@@ -5,25 +5,29 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Bank of Banksville</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
 </head>
 <body>
     <!-- TODO: Backend logic, authentication -->
     <!-- TODO: Accounts view, banking logic -->
     <!-- TODO: Login sessions -->
     <!-- TODO: Content security policy headers -->
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <h1>The Bank of Banksville</h1>
-        </div>
-        <div class="row justify-content-center">
-            <h3 class="text-muted">The best bank to do your banking with, you can bank on it.</h2>
+    <div class="container">
+        <div class="row">
+            <div class="text-center col">
+                <h1>The Bank of Banksville</h1>
+            </div>
         </div>
         <div class="row">
-            <div class="text-center col-md-2 offset-md-5">
+            <div class="text-center col">
+                <h3 class="text-muted">The best bank to do your banking with.</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="text-center col">
                 <div class="jumbotron">
                     <h4>Customer Login</h4>
-                    <form method="POST" action="/login">
+                    <form id="login-form" method="POST" action="/login">
                         <div class="form-group">
                             <label for="user-name-in">Username:</label>
                             <input type="text" class="form-control" id="user-name-in" name="username">
@@ -34,7 +38,7 @@
                         </div>
                         <button class="btn btn-primary" type="submit">Login</button>
                     </form>
-                    <a href="/create-user">Don't have an account?</a>
+                    <a href="/new-user">Don't have an account?</a>
                 </div>
             </div>
         </div>
