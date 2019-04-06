@@ -46,7 +46,7 @@ var verify = {
         if (typeof(input) !== 'string') {
             return {result: false, reason: 'Username must be a string of characters'};
         }
-        if (!/^([a-z0-9]){1,35}$/i.test(uName)) {
+        if (!/^([a-z0-9]){1,35}$/i.test(input)) {
             return {result: false, reason: 'Username must be alphanumeric and be between 1 and 35 characters in length'};
         }
         return {result: true, reason: ''};

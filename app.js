@@ -9,7 +9,25 @@ const xml2js = require('xml2js');
 var app = express();
 
 // enable parsing of the request body
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.text({ type: 'text/xml' }));
+// parse xml if it comes in
+app.use((req, resp, next) => {
+    if (req.is('text/xml') && req.method === 'POST') {
+        let xmlParser = new xml2js.Parser();
+        xmlParser.parseString(req.body, (err, result) => {
+            if (err) {
+                console.log(err);
+                resp.status(400);
+                resp.send('Invalid');
+            } else {
+                req.xml = result;
+                next();
+            }
+        });
+    } else {
+        next();
+    }
+});
 // Serve files from the static directory automatically
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
@@ -30,7 +48,7 @@ app.use(sessions({
 app.use((req, resp, next) => {
     console.log('Received ' + req.method + ' request for ' + req.originalUrl);
     if (req.body) {
-        console.log('Request has content:\n' + JSON.stringify(req.body));
+        console.log('Request has content:\n' + String(req.body));
     }
     next();
 });
@@ -45,24 +63,77 @@ app.get('/', (req, resp) => {
 });
 
 /**
+ * Check that the given object has the attributes expected for a login form
+ * @param {object} obj 
+ * @returns {boolean}
+ */
+function isLoginInfoPresent(obj) {
+    return (obj.form && obj.form.username && obj.form.username.length > 0 
+            && obj.form.password && obj.form.password.length > 0)
+}
+
+/**
  * Handler for post requests to login
  * @param req the request
  * @param resp the response
  */
 app.post('/login', (req, resp) => {
-    if (req.body.username !== undefined && req.body.password !== undefined) {
-        var userName = req.body.username;
-        var password = req.body.password;
+    let check = true;   // indicator to run checks
+    resp.set('Content-Type', 'text/xml');   // set response header for xml
+    if (isLoginInfoPresent(req.xml)) {  // check that required attributes are present
+        var userName = req.xml.form.username[0];
+        var password = req.xml.form.password[0];
+    } else {
+        // TODO: clean up XML error responses
+        let builder = new xml2js.Builder(); // fields not present, send xml error response
+        let xmlResp = builder.buildObject({
+            errorSet: [
+                {
+                    field: 
+                        {name: 'username', error: 'required'}
+                },
+                {
+                    field: 
+                        {name: 'password', error: 'required'}
+                }
+            ]});
+        resp.status(400);
+        resp.send(xmlResp);
+        check = false;  // skip any checks
     }
-    if (!verify.userNameNoDb(userName).result || !verify.password(password).result) {
-        // TODO: return response for when input is bad
+    // verify that the content of the username and password are valid (no disallowed characters, etc.)
+    // if the password/username the user input doesn't even follow required constraints don't bother with database
+    if (check && (!verify.userNameNoDb(userName).result || !verify.password(password).result)) {
+        let builder = new xml2js.Builder();
+        let xmlResp = builder.buildObject({errorSet: [
+            {
+                field:
+                    {name: 'password', error: 'Invalid password/username'}
+            }
+        ]});
+        resp.status(400);
+        resp.send(xmlResp);
+        check = false;
     }
-    db.validateUser(userName, password).then((result) => {
-        if (result === true) {
-            req.session.username = userName;
-            resp.redirect('/'); // TODO: different redirect location
-        }
-    });
+    // check if username/password combo is valid in database
+    if (check) {
+        db.validateUser(userName, password).then((result) => {
+            if (result === true) {
+                req.session.username = userName;
+                resp.send('');
+            } else {
+                let builder = new xml2js.Builder();
+                let xmlResp = builder.buildObject({errorSet: [
+                    {
+                        field:
+                            {name: 'password', error: 'Invalid password/username'}
+                    }
+                ]});
+                resp.status(400);
+                resp.send(xmlResp);
+            }
+        });
+    }
 });
 
 // listen on port 3000, output a log statement to show that the server should be up

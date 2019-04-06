@@ -6,6 +6,13 @@
     <title>Bank of Banksville</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+    <script src="/static/js/xmlFormHandler.js"></script>
+    <script>
+        'use strict';
+        window.addEventListener('load', function(ev) {
+            xmlFormHandler.bindFormSubmit('/login', ['username', 'password']);
+        });
+    </script>
 </head>
 <body>
     <!-- TODO: Backend logic, authentication -->
