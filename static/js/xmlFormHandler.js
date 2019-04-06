@@ -67,7 +67,7 @@ var xmlFormHandler = (function() {
              * @param {string} formSelector A selector to use to get the for retrieving the form 
              */
             value: function(postUrl, fieldNames, formSelector = 'form', redirectUrl = null) {
-                let objNmSpc = this;
+                let objNmSpc = this; // TODO: add a validation check before sending off data
                 document.querySelector(formSelector + ' button[type="submit"]').addEventListener('click', function(event) {
                     event.preventDefault();
                     let xmlData = objNmSpc.serializeForm(formSelector); // get form XML data
