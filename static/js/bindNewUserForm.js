@@ -1,14 +1,5 @@
 "use strict";
 
-function cleanupErrors(fieldNames) {
-    for (let i of fieldNames) {
-        let errEl = document.getElementById(i + '-error');
-        if (errEl) {
-            errEl.remove();
-        }
-    }
-}
-
 window.addEventListener('load', function(ev) {
     let inputNames = ['first_name', 'last_name', 'street', 
                       'city', 'country_state', 'country', 
@@ -49,7 +40,7 @@ window.addEventListener('load', function(ev) {
             }
         }
         if (valid === true) {
-            cleanupErrors(inputs);
+            xmlFormHandler.cleanupErrors(inputs);
         } 
 
         return valid;

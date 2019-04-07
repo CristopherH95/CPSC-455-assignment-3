@@ -57,6 +57,24 @@ const xmlFormHandler = (function() {
             },
             enumerable: true
         },
+        /**
+         * Removes any error elements related to the given list of field names, if they exist
+         * 
+         * @function cleanupErrors
+         * @memberof xmlFormHandler
+         * @param {Array<string>} fieldNames list of names to use for checking for error elements
+         */
+        cleanupErrors: {
+            value: function(fieldNames) {
+                for (let i of fieldNames) {
+                    let errEl = document.getElementById(i + '-error');
+                    if (errEl) {
+                        errEl.remove();
+                    }
+                }
+            },
+            enumerable: true
+        },
         bindFormSubmit: {
             /**
              * @function bindFormSubmit
@@ -71,6 +89,7 @@ const xmlFormHandler = (function() {
                 let objNmSpc = this;
                 document.querySelector(formSelector + ' button[type="submit"]').addEventListener('click', function(event) {
                     event.preventDefault();
+                    objNmSpc.cleanupErrors(fieldNames);
                     if (typeof(checkForm) !== 'function' || checkForm(formSelector) === true) {
                         let xmlData = objNmSpc.serializeForm(formSelector); // get form XML data
                         let req = new XMLHttpRequest(); // create a request

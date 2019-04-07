@@ -46,6 +46,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 // Setup session info
 app.use(sessions({
     cookieName: 'bnkSession',
+    // used for cookie encryption, if this were a production system it would be better stored elsewhere (such as an environment variable)
     secret: '5e2c512fa2d74ad016f55547117bf23e2c623a2dd2e3480e7ab901b9b559e888dd9716',
     duration: 3 * 60 * 1000, // 3 minutes
     activeDuration: 1 * 60 * 1000, // extend by 1 minute on activity
@@ -95,6 +96,27 @@ function isLoginInfoPresent(obj) {
 }
 
 /**
+ * Create an XML document describing form errors
+ * @param {Array<{name: string, error: string}>} errors A list of objects describing the errors to create in the xml string
+ * @returns {string}
+ */
+function buildXmlFormErrorSet(errors) {
+    let builder = new xml2js.Builder();
+    let obj = { errorSet: [] };
+
+    for (let i of errors) {
+        obj.errorSet.push({
+            field: {
+                name: i.name,
+                error: i.error
+            }
+        });
+    }
+
+    return builder.buildObject(obj);
+}
+
+/**
  * Handler for post requests to login
  * @param req the request
  * @param resp the response
@@ -106,19 +128,8 @@ app.post('/login', (req, resp) => {
         var userName = req.xml.form.username[0];
         var password = req.xml.form.password[0];
     } else {
-        // TODO: clean up XML error responses
-        let builder = new xml2js.Builder(); // fields not present, send xml error response
-        let xmlResp = builder.buildObject({
-            errorSet: [
-                {
-                    field: 
-                        {name: 'username', error: 'required'}
-                },
-                {
-                    field: 
-                        {name: 'password', error: 'required'}
-                }
-            ]});
+        let xmlResp = buildXmlFormErrorSet([{name: 'username', error: 'Required'}, 
+                                            {name: 'password', error: 'Required'}]);
         resp.status(400);
         resp.send(xmlResp);
         check = false;  // skip any checks
@@ -126,13 +137,7 @@ app.post('/login', (req, resp) => {
     // verify that the content of the username and password are valid (no disallowed characters, etc.)
     // if the password/username the user input doesn't even follow required constraints don't bother with database
     if (check && (!verify.userNameNoDb(userName).result || !verify.password(password).result)) {
-        let builder = new xml2js.Builder();
-        let xmlResp = builder.buildObject({errorSet: [
-            {
-                field:
-                    {name: 'password', error: 'Invalid password/username'}
-            }
-        ]});
+        let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
         resp.status(400);
         resp.send(xmlResp);
         check = false;
@@ -142,15 +147,9 @@ app.post('/login', (req, resp) => {
         db.validateUser(userName, password).then((result) => {
             if (result === true) {
                 req.session.username = userName;
-                resp.send('');
+                resp.send('OK');
             } else {
-                let builder = new xml2js.Builder();
-                let xmlResp = builder.buildObject({errorSet: [
-                    {
-                        field:
-                            {name: 'password', error: 'Invalid password/username'}
-                    }
-                ]});
+                let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
                 resp.status(400);
                 resp.send(xmlResp);
             }
