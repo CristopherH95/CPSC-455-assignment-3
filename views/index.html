@@ -5,20 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Bank of Banksville</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/favicon.ico?v=1.0" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
     <script src="/static/js/xmlFormHandler.js"></script>
-    <script>
-        'use strict';
-        window.addEventListener('load', function(ev) {
-            xmlFormHandler.bindFormSubmit('/login', ['username', 'password']);
-        });
-    </script>
+    <script src="/static/js/bindLoginForm.js"></script>
 </head>
 <body>
     <!-- TODO: Backend logic, authentication -->
     <!-- TODO: Accounts view, banking logic -->
     <!-- TODO: Login sessions -->
-    <!-- TODO: Content security policy headers -->
     <div class="container">
         <div class="row">
             <div class="text-center col">
@@ -37,11 +32,11 @@
                     <form id="login-form" method="POST" action="/login">
                         <div class="form-group">
                             <label for="user-name-in">Username:</label>
-                            <input type="text" class="form-control" id="user-name-in" name="username">
+                            <input type="text" class="form-control" id="user-name-in" name="username" required>
                         </div>
                         <div class="form-group">
                             <label for="user-pass-in">Password:</label>
-                            <input type="password" class="form-control" id="user-pass-in" name="password">
+                            <input type="password" class="form-control" id="user-pass-in" name="password" required>
                         </div>
                         <button class="btn btn-primary" type="submit">Login</button>
                     </form>

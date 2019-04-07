@@ -89,8 +89,9 @@ var xmlFormHandler = (function() {
                                         let nameNode = i.querySelector('name');
                                         if (nameNode && nameNode.textContent === field) { 
                                             // if the error field is the same as a form field, add the error text
-                                            let errorEl = objNmSpc.getOrCreateElement('#' + field + '-error', 
-                                                                                     {tag: 'p', classes: ['text-danger', ], id: '#' + field + '-error'}, 
+                                            let errorElId = field + '-error';
+                                            let errorEl = objNmSpc.getOrCreateElement('#' + errorElId, 
+                                                                                     {tag: 'p', classes: ['text-danger', ], id: errorElId}, 
                                                                                      'input[name="' + field + '"]');
                                             let errorNode = i.querySelector('error');
                                             if (errorNode) {

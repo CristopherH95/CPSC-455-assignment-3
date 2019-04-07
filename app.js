@@ -2,13 +2,25 @@ const express = require('express');
 const db = require('./db');
 const path = require('path');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
 const sessions = require('client-sessions');
 const verify = require('./verify');
 const xml2js = require('xml2js');
 
 var app = express();
 
-// enable parsing of the request body
+// Set content security policy to allow content from self only
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        objectSrc: ["'none'"]
+    }
+}));
+// set x-xss-protection header (modern browsers will be alert for xss)
+app.use(helmet.xssFilter());
+// enable parsing of the request body (accept only XML type)
 app.use(bodyParser.text({ type: 'text/xml' }));
 // parse xml if it comes in
 app.use((req, resp, next) => {
@@ -35,8 +47,9 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 app.use(sessions({
     cookieName: 'bnkSession',
     secret: '5e2c512fa2d74ad016f55547117bf23e2c623a2dd2e3480e7ab901b9b559e888dd9716',
-    duration: 30 * 60 * 1000, // 30 minutes
-    activeDuration: 5 * 60 * 1000, // extend by 5 minutes on activity
+    duration: 3 * 60 * 1000, // 3 minutes
+    activeDuration: 1 * 60 * 1000, // extend by 1 minute on activity
+    // TODO: set httpOnly
 }));
 
 /**
@@ -54,6 +67,15 @@ app.use((req, resp, next) => {
 });
 
 /**
+ * Handler for favicon.ico
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/favicon.ico', (req, resp) => {
+    resp.sendFile(__dirname + '/favicon.ico');
+});
+
+/**
  * Handler for index login page, simply sends the login page
  * @param req the request
  * @param resp the response
@@ -68,8 +90,8 @@ app.get('/', (req, resp) => {
  * @returns {boolean}
  */
 function isLoginInfoPresent(obj) {
-    return (obj.form && obj.form.username && obj.form.username.length > 0 
-            && obj.form.password && obj.form.password.length > 0)
+    return (obj.form && obj.form.username && obj.form.username.length > 0 && obj.form.username[0]
+            && obj.form.password && obj.form.password.length > 0 && obj.form.username[0]);
 }
 
 /**
@@ -134,6 +156,15 @@ app.post('/login', (req, resp) => {
             }
         });
     }
+});
+
+/**
+ * Handles get requests for the new user form page
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/new-user', (req, resp) => {
+    resp.sendFile(__dirname + '/views/new-user.html');
 });
 
 // listen on port 3000, output a log statement to show that the server should be up
