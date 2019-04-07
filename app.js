@@ -130,7 +130,7 @@ app.post('/login', (req, resp) => {
     } else {
         let xmlResp = buildXmlFormErrorSet([{name: 'username', error: 'Required'}, 
                                             {name: 'password', error: 'Required'}]);
-        resp.status(400);
+        resp.status(401);
         resp.send(xmlResp);
         check = false;  // skip any checks
     }
@@ -138,7 +138,7 @@ app.post('/login', (req, resp) => {
     // if the password/username the user input doesn't even follow required constraints don't bother with database
     if (check && (!verify.userNameNoDb(userName).result || !verify.password(password).result)) {
         let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
-        resp.status(400);
+        resp.status(401);
         resp.send(xmlResp);
         check = false;
     }
@@ -150,7 +150,7 @@ app.post('/login', (req, resp) => {
                 resp.send('OK');
             } else {
                 let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
-                resp.status(400);
+                resp.status(401);
                 resp.send(xmlResp);
             }
         });

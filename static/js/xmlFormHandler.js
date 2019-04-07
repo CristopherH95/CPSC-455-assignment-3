@@ -75,6 +75,35 @@ const xmlFormHandler = (function() {
             },
             enumerable: true
         },
+        /**
+         * Places elements containing error messages from an XML based response to a form submission
+         * 
+         * @function placeFormErrors
+         * @memberof xmlFormHandler
+         * @param {Array<string>} fieldNames list of field names in the form
+         * @param {HTMLCollectionOf<element>} xmlErrorFields a collection of elements containing field error data from the server
+         */
+        placeFormErrors: {
+            value: function(fieldNames, xmlErrorFields) {
+                for (let field of fieldNames) {
+                    for (let i of xmlErrorFields) {
+                        let nameNode = i.querySelector('name');
+                        if (nameNode && nameNode.textContent === field) { 
+                            // if the error field is the same as a form field, add the error text
+                            let errorElId = field + '-error';
+                            let errorEl = this.getOrCreateElement('#' + errorElId, 
+                                                                 {tag: 'p', classes: ['text-danger', ], id: errorElId}, 
+                                                                 'input[name="' + field + '"]');
+                            let errorNode = i.querySelector('error');
+                            if (errorNode) {
+                                errorEl.innerText = errorNode.textContent;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        },
         bindFormSubmit: {
             /**
              * @function bindFormSubmit
@@ -82,7 +111,7 @@ const xmlFormHandler = (function() {
              * @param {string} postUrl A URL to use for POSTing data
              * @param {string} redirectUrl A URL to use for redirecting the user on success (if necessary)
              * @param {function} checkForm A validation function to run before sending data, with the form selector as an argument (must return a boolean value)
-             * @param {Array} fieldNames A list of field names to use for form errors
+             * @param {Array<string>} fieldNames A list of field names to use for form errors
              * @param {string} formSelector A selector to use to get the for retrieving the form 
              */
             value: function(postUrl, fieldNames, checkForm = null, formSelector = 'form', redirectUrl = null) {
@@ -105,23 +134,7 @@ const xmlFormHandler = (function() {
                                 } else {
                                     // bad response, so check for form errors
                                     let xmlFields = req.responseXML.getElementsByTagName('field');  // get all fields
-                                    for (let field of fieldNames) {
-                                        for (let i of xmlFields) {
-                                            let nameNode = i.querySelector('name');
-                                            if (nameNode && nameNode.textContent === field) { 
-                                                // if the error field is the same as a form field, add the error text
-                                                let errorElId = field + '-error';
-                                                let errorEl = objNmSpc.getOrCreateElement('#' + errorElId, 
-                                                                                        {tag: 'p', classes: ['text-danger', ], id: errorElId}, 
-                                                                                        'input[name="' + field + '"]');
-                                                let errorNode = i.querySelector('error');
-                                                if (errorNode) {
-                                                    errorEl.innerText = errorNode.textContent;
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    objNmSpc.placeFormErrors(fieldNames, xmlFields);
                                 }
                             }
                         }
