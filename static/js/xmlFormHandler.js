@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
 /**
  * @namespace xmlFormHandler
- * A collection of functions for handling form data with XML
+ * defines a collection of functions for handling form data with XML
  */
-var xmlFormHandler = (function() {
+const xmlFormHandler = (function() {
     let namespace = {};
     Object.defineProperties(namespace, {
         /**
@@ -63,41 +63,44 @@ var xmlFormHandler = (function() {
              * @memberof xmlFormHandler
              * @param {string} postUrl A URL to use for POSTing data
              * @param {string} redirectUrl A URL to use for redirecting the user on success (if necessary)
+             * @param {function} checkForm A validation function to run before sending data, with the form selector as an argument (must return a boolean value)
              * @param {Array} fieldNames A list of field names to use for form errors
              * @param {string} formSelector A selector to use to get the for retrieving the form 
              */
-            value: function(postUrl, fieldNames, formSelector = 'form', redirectUrl = null) {
-                let objNmSpc = this; // TODO: add a validation check before sending off data
+            value: function(postUrl, fieldNames, checkForm = null, formSelector = 'form', redirectUrl = null) {
+                let objNmSpc = this;
                 document.querySelector(formSelector + ' button[type="submit"]').addEventListener('click', function(event) {
                     event.preventDefault();
-                    let xmlData = objNmSpc.serializeForm(formSelector); // get form XML data
-                    let req = new XMLHttpRequest(); // create a request
-                    req.open('POST', postUrl);  // set the destination
-                    req.responseType = 'document';  // accept text responses
-                    req.setRequestHeader('Content-Type', 'text/xml');
-                    req.send(xmlData);  // send the data
-                    req.onreadystatechange = function() {
-                        if (this.readyState === 4) {    // when the response is ready, check the status
-                            if (this.status === 200 && redirectUrl) {
-                                // if status good and a redirectUrl is given, initiate redirect
-                                window.location.replace(redirectUrl)
-                            } else {
-                                // bad response, so check for form errors
-                                let xmlFields = req.responseXML.getElementsByTagName('field');  // get all fields
-                                for (let field of fieldNames) {
-                                    for (let i of xmlFields) {
-                                        let nameNode = i.querySelector('name');
-                                        if (nameNode && nameNode.textContent === field) { 
-                                            // if the error field is the same as a form field, add the error text
-                                            let errorElId = field + '-error';
-                                            let errorEl = objNmSpc.getOrCreateElement('#' + errorElId, 
-                                                                                     {tag: 'p', classes: ['text-danger', ], id: errorElId}, 
-                                                                                     'input[name="' + field + '"]');
-                                            let errorNode = i.querySelector('error');
-                                            if (errorNode) {
-                                                errorEl.innerText = errorNode.textContent;
+                    if (typeof(checkForm) !== 'function' || checkForm(formSelector) === true) {
+                        let xmlData = objNmSpc.serializeForm(formSelector); // get form XML data
+                        let req = new XMLHttpRequest(); // create a request
+                        req.open('POST', postUrl);  // set the destination
+                        req.responseType = 'document';  // accept text responses
+                        req.setRequestHeader('Content-Type', 'text/xml');
+                        req.send(xmlData);  // send the data
+                        req.onreadystatechange = function() {
+                            if (this.readyState === 4) {    // when the response is ready, check the status
+                                if (this.status === 200 && redirectUrl) {
+                                    // if status good and a redirectUrl is given, initiate redirect
+                                    window.location.replace(redirectUrl)
+                                } else {
+                                    // bad response, so check for form errors
+                                    let xmlFields = req.responseXML.getElementsByTagName('field');  // get all fields
+                                    for (let field of fieldNames) {
+                                        for (let i of xmlFields) {
+                                            let nameNode = i.querySelector('name');
+                                            if (nameNode && nameNode.textContent === field) { 
+                                                // if the error field is the same as a form field, add the error text
+                                                let errorElId = field + '-error';
+                                                let errorEl = objNmSpc.getOrCreateElement('#' + errorElId, 
+                                                                                        {tag: 'p', classes: ['text-danger', ], id: errorElId}, 
+                                                                                        'input[name="' + field + '"]');
+                                                let errorNode = i.querySelector('error');
+                                                if (errorNode) {
+                                                    errorEl.innerText = errorNode.textContent;
+                                                }
+                                                break;
                                             }
-                                            break;
                                         }
                                     }
                                 }

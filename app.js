@@ -61,7 +61,7 @@ app.use(sessions({
 app.use((req, resp, next) => {
     console.log('Received ' + req.method + ' request for ' + req.originalUrl);
     if (req.body) {
-        console.log('Request has content:\n' + String(req.body));
+        console.log('Request has content:\n' + JSON.stringify(req.body));
     }
     next();
 });
@@ -166,6 +166,8 @@ app.post('/login', (req, resp) => {
 app.get('/new-user', (req, resp) => {
     resp.sendFile(__dirname + '/views/new-user.html');
 });
+
+// TODO: create-user or new-user POST request handler
 
 // listen on port 3000, output a log statement to show that the server should be up
 console.log('Listening on port 3000');
