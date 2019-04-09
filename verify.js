@@ -24,7 +24,7 @@
  *                          as well as being sufficiently long
  * @see https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Authentication_Cheat_Sheet.md for password complexity guidelines used
  */
-const verify = {
+let verify = {
   /**
      *
      * @param {string} input the input value for the user name
