@@ -7,50 +7,53 @@ const sessions = require('client-sessions');
 const verify = require('./verify');
 const xml2js = require('xml2js');
 
-var app = express();
+const app = express();
 
 // Set content security policy to allow content from self only
 app.use(helmet.contentSecurityPolicy({
-    directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        objectSrc: ["'none'"]
-    }
+  directives: {
+    defaultSrc: ['\'self\''],
+    scriptSrc: ['\'self\''],
+    styleSrc: ['\'self\''],
+    objectSrc: ['\'none\''],
+  },
 }));
 // set x-xss-protection header (modern browsers will be alert for xss)
 app.use(helmet.xssFilter());
 // enable parsing of the request body (accept only XML type)
-app.use(bodyParser.text({ type: 'text/xml' }));
+app.use(bodyParser.text({type: 'text/xml'}));
 // parse xml if it comes in
 app.use((req, resp, next) => {
-    if (req.is('text/xml') && req.method === 'POST') {
-        let xmlParser = new xml2js.Parser();
-        xmlParser.parseString(req.body, (err, result) => {
-            if (err) {
-                console.log(err);
-                resp.status(400);
-                resp.send('Invalid');
-            } else {
-                req.xml = result;
-                next();
-            }
-        });
-    } else {
+  if (req.is('text/xml') && req.method === 'POST') {
+    const xmlParser = new xml2js.Parser();
+    xmlParser.parseString(req.body, (err, result) => {
+      if (err) {
+        console.log(err);
+        resp.status(400);
+        resp.send('Invalid');
+      } else {
+        req.xml = result;
         next();
-    }
+      }
+    });
+  } else {
+    next();
+  }
 });
 // Serve files from the static directory automatically
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Setup session info
 app.use(sessions({
-    cookieName: 'bnkSession',
-    // used for cookie encryption, if this were a production system it would be better stored elsewhere (such as an environment variable)
-    secret: '5e2c512fa2d74ad016f55547117bf23e2c623a2dd2e3480e7ab901b9b559e888dd9716',
-    duration: 3 * 60 * 1000, // 3 minutes
-    activeDuration: 1 * 60 * 1000, // extend by 1 minute on activity
-    // TODO: set httpOnly
+  cookieName: 'bnkSession',
+  // used for cookie encryption,
+  // if this were a production system it would be better stored
+  // elsewhere (such as an environment variable)
+  secret: '5e2c512fa2d74ad016f55547117bf23e2c623a2dd2e3480e7ab9'
+          + '01b9b559e888dd9716',
+  duration: 3 * 60 * 1000, // 3 minutes
+  activeDuration: 1 * 60 * 1000, // extend by 1 minute on activity
+  // TODO: set httpOnly
 }));
 
 /**
@@ -60,11 +63,11 @@ app.use(sessions({
  * @param next next middleware function to run in chain
  */
 app.use((req, resp, next) => {
-    console.log('Received ' + req.method + ' request for ' + req.originalUrl);
-    if (req.body) {
-        console.log('Request has content:\n' + JSON.stringify(req.body));
-    }
-    next();
+  console.log('Received ' + req.method + ' request for ' + req.originalUrl);
+  if (req.body) {
+    console.log('Request has content:\n' + JSON.stringify(req.body));
+  }
+  next();
 });
 
 /**
@@ -73,7 +76,7 @@ app.use((req, resp, next) => {
  * @param resp the response
  */
 app.get('/favicon.ico', (req, resp) => {
-    resp.sendFile(__dirname + '/favicon.ico');
+  resp.sendFile(__dirname + '/favicon.ico');
 });
 
 /**
@@ -82,38 +85,41 @@ app.get('/favicon.ico', (req, resp) => {
  * @param resp the response
  */
 app.get('/', (req, resp) => {
-    resp.sendFile(__dirname + '/views/index.html');
+  resp.sendFile(__dirname + '/views/index.html');
 });
 
 /**
  * Check that the given object has the attributes expected for a login form
- * @param {object} obj 
- * @returns {boolean}
+ * @param {object} obj
+ * @return {boolean}
  */
 function isLoginInfoPresent(obj) {
-    return (obj.form && obj.form.username && obj.form.username.length > 0 && obj.form.username[0]
-            && obj.form.password && obj.form.password.length > 0 && obj.form.username[0]);
+  return (obj.form && obj.form.username && obj.form.username.length > 0
+    && obj.form.username[0] && obj.form.password &&
+    obj.form.password.length > 0 && obj.form.username[0]);
 }
 
 /**
  * Create an XML document describing form errors
- * @param {Array<{name: string, error: string}>} errors A list of objects describing the errors to create in the xml string
- * @returns {string}
+ * @param {Array<{name: string, error: string}>}
+ *         errors A list of objects describing
+ *         the errors to create in the xml string
+ * @return {string}
  */
 function buildXmlFormErrorSet(errors) {
-    let builder = new xml2js.Builder();
-    let obj = { errorSet: [] };
+  const builder = new xml2js.Builder();
+  const obj = {errorSet: []};
 
-    for (let i of errors) {
-        obj.errorSet.push({
-            field: {
-                name: i.name,
-                error: i.error
-            }
-        });
-    }
+  for (const i of errors) {
+    obj.errorSet.push({
+      field: {
+        name: i.name,
+        error: i.error,
+      },
+    });
+  }
 
-    return builder.buildObject(obj);
+  return builder.buildObject(obj);
 }
 
 /**
@@ -122,39 +128,49 @@ function buildXmlFormErrorSet(errors) {
  * @param resp the response
  */
 app.post('/login', (req, resp) => {
-    let check = true;   // indicator to run checks
-    resp.set('Content-Type', 'text/xml');   // set response header for xml
-    if (isLoginInfoPresent(req.xml)) {  // check that required attributes are present
-        var userName = req.xml.form.username[0];
-        var password = req.xml.form.password[0];
-    } else {
-        let xmlResp = buildXmlFormErrorSet([{name: 'username', error: 'Required'}, 
-                                            {name: 'password', error: 'Required'}]);
+  let check = true; // indicator to run checks
+  let userName = null;
+  let password = null;
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  if (isLoginInfoPresent(req.xml)) {
+    // ensure that required attributes are present
+    userName = req.xml.form.username[0];
+    password = req.xml.form.password[0];
+  } else {
+    const xmlResp = buildXmlFormErrorSet([{name: 'username', error: 'Required'},
+      {name: 'password', error: 'Required'}]);
+    resp.status(401);
+    resp.send(xmlResp);
+    check = false; // skip any checks
+  }
+  // verify that the content of the username and password are valid
+  // (no disallowed characters, etc.)
+  // if the password/username the user input doesn't even
+  // follow required constraints don't bother with database
+  if (check && (!verify.userNameNoDb(userName).result ||
+        !verify.password(password).result)) {
+    const xmlResp = buildXmlFormErrorSet([{
+      name: 'password', error: 'Invalid password/username',
+    }]);
+    resp.status(401);
+    resp.send(xmlResp);
+    check = false;
+  }
+  // check if username/password combo is valid in database
+  if (check) {
+    db.validateUser(userName, password).then((result) => {
+      if (result === true) {
+        req.session.username = userName;
+        resp.send('OK');
+      } else {
+        const xmlResp = buildXmlFormErrorSet([{
+          name: 'password', error: 'Invalid password/username',
+        }]);
         resp.status(401);
         resp.send(xmlResp);
-        check = false;  // skip any checks
-    }
-    // verify that the content of the username and password are valid (no disallowed characters, etc.)
-    // if the password/username the user input doesn't even follow required constraints don't bother with database
-    if (check && (!verify.userNameNoDb(userName).result || !verify.password(password).result)) {
-        let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
-        resp.status(401);
-        resp.send(xmlResp);
-        check = false;
-    }
-    // check if username/password combo is valid in database
-    if (check) {
-        db.validateUser(userName, password).then((result) => {
-            if (result === true) {
-                req.session.username = userName;
-                resp.send('OK');
-            } else {
-                let xmlResp = buildXmlFormErrorSet([{name: 'password', error: 'Invalid password/username'}]);
-                resp.status(401);
-                resp.send(xmlResp);
-            }
-        });
-    }
+      }
+    });
+  }
 });
 
 /**
@@ -163,27 +179,28 @@ app.post('/login', (req, resp) => {
  * @param resp the response
  */
 app.get('/new-user', (req, resp) => {
-    resp.sendFile(__dirname + '/views/new-user.html');
+  resp.sendFile(__dirname + '/views/new-user.html');
 });
 
 // TODO: create-user or new-user POST request handler
 
-// listen on port 3000, output a log statement to show that the server should be up
+// listen on port 3000,
+// output a log statement to show that the server should be up
 console.log('Listening on port 3000');
-var server = app.listen(3000);
+const server = app.listen(3000);
 
 // Handle termination signal, close database and server gracefully
 process.on('SIGINT', () => {
-    console.log('Shutting down...');
-    db.close((err) => { // close database using its close method
-        if (err) {
-            console.log(err);
-            console.log('Could not close database');
-        } else {
-            console.log('Closed database');
-        }
-        server.close(); // close the server
-        console.log('Stopped server');
-        process.exit(0); // exit process
-    });
+  console.log('Shutting down...');
+  db.close((err) => { // close database using its close method
+    if (err) {
+      console.log(err);
+      console.log('Could not close database');
+    } else {
+      console.log('Closed database');
+    }
+    server.close(); // close the server
+    console.log('Stopped server');
+    process.exit(0); // exit process
+  });
 });
