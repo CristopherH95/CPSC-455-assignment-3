@@ -145,7 +145,7 @@ let db = Object.defineProperties(
           // so get a reference to the query here
           const insertQuery = this.insertUserQuery;
           return new Promise(function(resolve, reject) {
-            bcrypt.hash(userObj.pass, saltRounds, (hErr, hash) => {
+            bcrypt.hash(userObj.password, saltRounds, (hErr, hash) => {
               // hash the user password
               if (hErr) {
                 reject(hErr); // failed to hash, reject promise

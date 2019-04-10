@@ -89,14 +89,21 @@ app.get('/', (req, resp) => {
 });
 
 /**
- * Check that the given object has the attributes expected for a login form
- * @param {object} obj
+ * Check that the given object has the attributes expected for a form
+ * @param {object} obj JSON representation of a form from XML
+ * @param {Array<string>} fields list of field names to check
  * @return {boolean}
  */
-function isLoginInfoPresent(obj) {
-  return (obj.form && obj.form.username && obj.form.username.length > 0
-    && obj.form.username[0] && obj.form.password &&
-    obj.form.password.length > 0 && obj.form.username[0]);
+function areFormFieldsPresent(obj, fields) {
+  let present = true;
+  for (const i of fields) {
+    present = (i in obj.form && obj.form[i].length > 0);
+    if (!present) {
+      break;
+    }
+  }
+
+  return present;
 }
 
 /**
@@ -132,13 +139,15 @@ app.post('/login', (req, resp) => {
   let userName = null;
   let password = null;
   resp.set('Content-Type', 'text/xml'); // set response header for xml
-  if (isLoginInfoPresent(req.xml)) {
+  if (areFormFieldsPresent(req.xml, ['username', 'password'])) {
     // ensure that required attributes are present
     userName = req.xml.form.username[0];
     password = req.xml.form.password[0];
   } else {
-    const xmlResp = buildXmlFormErrorSet([{name: 'username', error: 'Required'},
-      {name: 'password', error: 'Required'}]);
+    const xmlResp = buildXmlFormErrorSet([
+      {name: 'username', error: 'Required'},
+      {name: 'password', error: 'Required'},
+    ]);
     resp.status(401);
     resp.send(xmlResp);
     check = false; // skip any checks
@@ -182,7 +191,109 @@ app.get('/new-user', (req, resp) => {
   resp.sendFile(__dirname + '/views/new-user.html');
 });
 
+/**
+ * validate a new user form and return any possible errors
+ * @param {object} req request object from express
+ * @return {{vals: object, err: Array<object>}}
+ */
+function validateNewUserForm(req) {
+  let vals = {
+    first_name: null,
+    last_name: null,
+    street: null,
+    city: null,
+    country_state: null,
+    country: null,
+    username: null,
+    password: null,
+  };
+  for (const fi of Object.keys(vals)) {
+    vals[fi] = req.xml[fi][0];
+  }
+  let valid = true;
+  let check;
+  let fieldValue;
+  let errors = [];
+  for (const fi of Object.keys(vals)) {
+    fieldValue = vals[fi];
+    switch (i) {
+      case 'first_name':
+      case 'last_name':
+        check = verify.name(fieldValue);
+        break;
+      case 'street':
+        check = verify.address(fieldValue);
+        break;
+      case 'country_state':
+      case 'country':
+        check = verify.stateCountry(fieldValue);
+        break;
+      case 'username':
+        check = verify.userName(fieldValue);
+        break;
+      default:
+        check = verify[i](fieldValue); // the names of the remaining inputs
+                                  // and their validators are the same
+                                  // so just use them as the key
+    }
+    if (check.result === false) {
+      if (valid === true) {
+        valid = check.result;
+      }
+      errors.push({
+        name: fi, error: check.reason,
+      });
+    }
+  }
+
+  return {vals: vals, err: errors};
+}
+
 // TODO: create-user or new-user POST request handler
+app.post('/create-user', async (req, resp) => {
+  if (areFormFieldsPresent(req.xml, Object.keys(vals))) {
+    const result = validateNewUserForm(req);
+    if (result.err.length > 0) {
+      const xmlResp = buildXmlFormErrorSet(result.err);
+      resp.status(400);
+      resp.send(xmlResp);
+    } else {
+      result.vals.user_id = result.vals.username; // ensure name mirrors db
+      try {
+        const result = await db.insertUser(result.vals);
+        if (result) {
+          resp.status(201);
+          resp.send('OK');
+        } else {
+          resp.status(500);
+          resp.send(buildXmlFormErrorSet([
+            {
+              name: 'password',
+              error: 'Failed to insert data, please try again later',
+            },
+          ]));
+        }
+      } catch (err) {
+        console.log(err);
+        resp.status(500);
+        resp.send(buildXmlFormErrorSet([
+          {
+            name: 'password',
+            error: 'Failed to insert data, please try again later',
+          },
+        ]));
+      }
+    }
+  } else {
+    const errorFields = [];
+    for (const k of Object.keys(vals)) {
+      errorFields.push({name: k, error: 'Required'});
+    }
+    const xmlResp = buildXmlFormErrorSet(errorFields);
+    resp.status(400);
+    resp.send(xmlResp);
+  }
+});
 
 // listen on port 3000,
 // output a log statement to show that the server should be up
