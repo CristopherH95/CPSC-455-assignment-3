@@ -20,7 +20,7 @@ window.xmlFormHandler = (function() {
         const fields = document.querySelectorAll(
             formSelector + ' input'
         ); // get all input fields
-        let xml = '<?xml version=\'1.0\'?><form>';
+        let xml = '<?xml version=\'1.0\' standalone=\'yes\'?><form>';
         for (const i of fields) {
           // each attribute of <form> is a tag with the name of the field
           xml += '<' + String(i.name) + '>';

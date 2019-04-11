@@ -3,7 +3,7 @@
  * each returns an object where 'result' is true/false
  * indicating whether the input should be valid,
  * and 'reason' is a string explaining why input is invalid (if applicable)
- * @namespace verify defines functions for verifying user input data
+ * @namespace validate defines functions for validateing user input data
  * @property {function} userName checks if the given username is alphanumeric
  *                      and does not already exist
  * @property {function} userNameNoDb checks if a given username is alphanumeric,
@@ -24,7 +24,7 @@
  *                          as well as being sufficiently long
  * @see https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Authentication_Cheat_Sheet.md for password complexity guidelines used
  */
-let verify = {
+let validate = {
   /**
      *
      * @param {string} input the input value for the user name
@@ -172,6 +172,7 @@ let verify = {
       return {result: false, reason: 'Password must be a string of characters'};
     }
     const check = {result: true, reason: ''};
+    // characters from OWASP: https://www.owasp.org/index.php/Password_special_characters
     const special = ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'.split('');
     if (pass.length < 10 || pass.length > 128) {
       check.result = false;
@@ -216,6 +217,7 @@ let verify = {
     return check;
   },
 };
-verify = Object.freeze(verify); // freeze verify object so it cannot be altered
+// freeze validate object so it cannot be altered
+validate = Object.freeze(validate);
 
-module.exports = verify;
+module.exports = validate;

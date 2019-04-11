@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * @namespace verify
- * defines functions for verifying user input data
+ * @namespace validate
+ * defines functions for validateing user input data
  */
-window.verify = (function() {
+window.validate = (function() {
   const namespace = {};
   Object.defineProperties(namespace, {
     /**

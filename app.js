@@ -4,10 +4,11 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const sessions = require('client-sessions');
-const verify = require('./verify');
+const validate = require('./validate');
 const xml2js = require('xml2js');
 
 const app = express();
+const unprotectedPaths = ['/', '/login', '/new-user', '/create-user'];
 
 // Set content security policy to allow content from self only
 app.use(helmet.contentSecurityPolicy({
@@ -45,7 +46,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Setup session info
 app.use(sessions({
-  cookieName: 'bnkSession',
+  cookieName: 'session',
   // used for cookie encryption,
   // if this were a production system it would be better stored
   // elsewhere (such as an environment variable)
@@ -53,7 +54,9 @@ app.use(sessions({
           + '01b9b559e888dd9716',
   duration: 3 * 60 * 1000, // 3 minutes
   activeDuration: 1 * 60 * 1000, // extend by 1 minute on activity
-  // TODO: set httpOnly
+  cookie: {
+    httpOnly: true,
+  },
 }));
 
 /**
@@ -68,6 +71,22 @@ app.use((req, resp, next) => {
     console.log('Request has content:\n' + JSON.stringify(req.body));
   }
   next();
+});
+
+/**
+ * Middleware for redirecting users who have not authenticated
+ * for protected areas
+ * @param req the request
+ * @param resp the response
+ * @param next next middleware function to run in chain
+ */
+app.use((req, resp, next) => {
+  if (!req.session.username && !/^\/static/.test(req.url)
+      && !unprotectedPaths.includes(req.url)) {
+    resp.redirect('/'); console.log('redirect');
+  } else {
+    next();
+  }
 });
 
 /**
@@ -152,19 +171,6 @@ app.post('/login', (req, resp) => {
     resp.send(xmlResp);
     check = false; // skip any checks
   }
-  // verify that the content of the username and password are valid
-  // (no disallowed characters, etc.)
-  // if the password/username the user input doesn't even
-  // follow required constraints don't bother with database
-  if (check && (!verify.userNameNoDb(userName).result ||
-        !verify.password(password).result)) {
-    const xmlResp = buildXmlFormErrorSet([{
-      name: 'password', error: 'Invalid password/username',
-    }]);
-    resp.status(401);
-    resp.send(xmlResp);
-    check = false;
-  }
   // check if username/password combo is valid in database
   if (check) {
     db.validateUser(userName, password).then((result) => {
@@ -197,7 +203,7 @@ app.get('/new-user', (req, resp) => {
  * @return {{vals: object, err: Array<object>}}
  */
 function validateNewUserForm(req) {
-  let vals = {
+  const vals = {
     first_name: null,
     last_name: null,
     street: null,
@@ -213,26 +219,26 @@ function validateNewUserForm(req) {
   let valid = true;
   let check;
   let fieldValue;
-  let errors = [];
+  const errors = [];
   for (const fi of Object.keys(vals)) {
     fieldValue = vals[fi];
     switch (i) {
       case 'first_name':
       case 'last_name':
-        check = verify.name(fieldValue);
+        check = validate.name(fieldValue);
         break;
       case 'street':
-        check = verify.address(fieldValue);
+        check = validate.address(fieldValue);
         break;
       case 'country_state':
       case 'country':
-        check = verify.stateCountry(fieldValue);
+        check = validate.stateCountry(fieldValue);
         break;
       case 'username':
-        check = verify.userName(fieldValue);
+        check = validate.userName(fieldValue);
         break;
       default:
-        check = verify[i](fieldValue); // the names of the remaining inputs
+        check = validate[i](fieldValue); // the names of the remaining inputs
                                   // and their validators are the same
                                   // so just use them as the key
     }
