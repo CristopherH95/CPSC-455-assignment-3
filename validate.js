@@ -53,6 +53,7 @@ let validate = {
       }
       return {result: false, reason: 'Username already exists'};
     } catch (err) {
+      console.log(err);
       return {
         result: false,
         reason: 'Encountered error while checking username',
@@ -134,7 +135,7 @@ let validate = {
         reason: 'City must be between 1 and 25 characters in length and '
                 + 'contain only alphabetical symbols, "\'", ",", ".", and "-"',
       };
-    } else if (/(\-\-)+/g.test(name)) {
+    } else if (/(\-\-)+/g.test(cityName)) {
       return {result: false, reason: 'City cannot contain consequtive "-"'};
     }
     return {result: true, reason: ''};

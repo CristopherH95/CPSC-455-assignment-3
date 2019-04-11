@@ -158,7 +158,8 @@ window.xmlFormHandler = (function() {
                 req.onreadystatechange = function() {
                   if (this.readyState === 4) {
                     // when the response is ready, check the status
-                    if (this.status === 200 && redirectUrl) {
+                    if (this.status >= 200 && this.status <= 299 &&
+                        redirectUrl) {
                       // if status good and a redirectUrl is given,
                       // initiate redirect
                       window.location.replace(redirectUrl);

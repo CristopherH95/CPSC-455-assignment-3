@@ -83,7 +83,8 @@ app.use((req, resp, next) => {
 app.use((req, resp, next) => {
   if (!req.session.username && !/^\/static/.test(req.url)
       && !unprotectedPaths.includes(req.url)) {
-    resp.redirect('/'); console.log('redirect');
+    console.log('unauthorized user, redirecting');
+    resp.redirect('/');
   } else {
     next();
   }
@@ -202,7 +203,7 @@ app.get('/new-user', (req, resp) => {
  * @param {object} req request object from express
  * @return {{vals: object, err: Array<object>}}
  */
-function validateNewUserForm(req) {
+async function validateNewUserForm(req) {
   const vals = {
     first_name: null,
     last_name: null,
@@ -214,7 +215,7 @@ function validateNewUserForm(req) {
     password: null,
   };
   for (const fi of Object.keys(vals)) {
-    vals[fi] = req.xml[fi][0];
+    vals[fi] = req.xml['form'][fi][0];
   }
   let valid = true;
   let check;
@@ -222,7 +223,7 @@ function validateNewUserForm(req) {
   const errors = [];
   for (const fi of Object.keys(vals)) {
     fieldValue = vals[fi];
-    switch (i) {
+    switch (fi) {
       case 'first_name':
       case 'last_name':
         check = validate.name(fieldValue);
@@ -235,10 +236,18 @@ function validateNewUserForm(req) {
         check = validate.stateCountry(fieldValue);
         break;
       case 'username':
-        check = validate.userName(fieldValue);
+        try {
+          check = await validate.userName(fieldValue, db);
+        } catch (err) {
+          console.log(err);
+          check = {
+            result: false,
+            reason: 'Could not validate username, please try again',
+          };
+        }
         break;
       default:
-        check = validate[i](fieldValue); // the names of the remaining inputs
+        check = validate[fi](fieldValue); // the names of the remaining inputs
                                   // and their validators are the same
                                   // so just use them as the key
     }
@@ -255,10 +264,25 @@ function validateNewUserForm(req) {
   return {vals: vals, err: errors};
 }
 
-// TODO: create-user or new-user POST request handler
+/**
+ * Handles POST requests with XML data for a new user
+ * @param req the request
+ * @param resp the response
+ */
 app.post('/create-user', async (req, resp) => {
-  if (areFormFieldsPresent(req.xml, Object.keys(vals))) {
-    const result = validateNewUserForm(req);
+  const fields = ['first_name', 'last_name', 'street',
+    'city', 'country_state', 'country', 'username', 'password'];
+  let result = null;
+  if (areFormFieldsPresent(req.xml, fields)) {
+    try {
+      result = await validateNewUserForm(req);
+    } catch (err) {
+      console.log(err);
+      result = {err: [{
+        name: 'username',
+        error: 'Could not validate data, please try again later',
+      }]};
+    }
     if (result.err.length > 0) {
       const xmlResp = buildXmlFormErrorSet(result.err);
       resp.status(400);
@@ -266,15 +290,15 @@ app.post('/create-user', async (req, resp) => {
     } else {
       result.vals.user_id = result.vals.username; // ensure name mirrors db
       try {
-        const result = await db.insertUser(result.vals);
-        if (result) {
+        const insertSuccess = await db.insertUser(result.vals);
+        if (insertSuccess) {
           resp.status(201);
           resp.send('OK');
         } else {
           resp.status(500);
           resp.send(buildXmlFormErrorSet([
             {
-              name: 'password',
+              name: 'username',
               error: 'Failed to insert data, please try again later',
             },
           ]));
@@ -284,7 +308,7 @@ app.post('/create-user', async (req, resp) => {
         resp.status(500);
         resp.send(buildXmlFormErrorSet([
           {
-            name: 'password',
+            name: 'username',
             error: 'Failed to insert data, please try again later',
           },
         ]));
@@ -299,6 +323,15 @@ app.post('/create-user', async (req, resp) => {
     resp.status(400);
     resp.send(xmlResp);
   }
+});
+
+/**
+ * Handles get requests for the user dashboard
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/dashboard', (req, resp) => {
+  resp.sendFile(__dirname + '/views/dashboard.html');
 });
 
 // listen on port 3000,
