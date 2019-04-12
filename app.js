@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const sessions = require('client-sessions');
 const validate = require('./validate');
 const xml2js = require('xml2js');
+const xssFilters = require('xss-filters');
 
 const app = express();
 const unprotectedPaths = ['/', '/login', '/new-user', '/create-user'];
@@ -23,7 +24,7 @@ app.use(helmet.contentSecurityPolicy({
 app.use(helmet.xssFilter());
 // enable parsing of the request body (accept only XML type)
 app.use(bodyParser.text({type: 'text/xml'}));
-// parse xml if it comes in
+// parse POSTed XML
 app.use((req, resp, next) => {
   if (req.is('text/xml') && req.method === 'POST') {
     const xmlParser = new xml2js.Parser();
@@ -48,8 +49,6 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 app.use(sessions({
   cookieName: 'session',
   // used for cookie encryption,
-  // if this were a production system it would be better stored
-  // elsewhere (such as an environment variable)
   secret: '5e2c512fa2d74ad016f55547117bf23e2c623a2dd2e3480e7ab9'
           + '01b9b559e888dd9716',
   duration: 3 * 60 * 1000, // 3 minutes
@@ -85,6 +84,15 @@ app.use((req, resp, next) => {
       && !unprotectedPaths.includes(req.url)) {
     console.log('unauthorized user, redirecting');
     resp.redirect('/');
+  } else {
+    next();
+  }
+});
+
+app.use((req, resp, next) => {
+  if (req.session.username && (req.url === '/' || req.url === '/new-user')) {
+    console.log('user already authenticated, redirecting');
+    resp.redirect('/dashboard');
   } else {
     next();
   }
@@ -273,13 +281,14 @@ app.post('/create-user', async (req, resp) => {
   const fields = ['first_name', 'last_name', 'street',
     'city', 'country_state', 'country', 'username', 'password'];
   let result = null;
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
   if (areFormFieldsPresent(req.xml, fields)) {
     try {
       result = await validateNewUserForm(req);
     } catch (err) {
       console.log(err);
       result = {err: [{
-        name: 'username',
+        name: 'country', // country is the last field
         error: 'Could not validate data, please try again later',
       }]};
     }
@@ -292,13 +301,14 @@ app.post('/create-user', async (req, resp) => {
       try {
         const insertSuccess = await db.insertUser(result.vals);
         if (insertSuccess) {
+          const builder = new xml2js.Builder();
           resp.status(201);
-          resp.send('OK');
+          resp.send(builder.buildObject({result: true}));
         } else {
           resp.status(500);
           resp.send(buildXmlFormErrorSet([
             {
-              name: 'username',
+              name: 'country',
               error: 'Failed to insert data, please try again later',
             },
           ]));
@@ -308,7 +318,7 @@ app.post('/create-user', async (req, resp) => {
         resp.status(500);
         resp.send(buildXmlFormErrorSet([
           {
-            name: 'username',
+            name: 'country',
             error: 'Failed to insert data, please try again later',
           },
         ]));
@@ -332,6 +342,34 @@ app.post('/create-user', async (req, resp) => {
  */
 app.get('/dashboard', (req, resp) => {
   resp.sendFile(__dirname + '/views/dashboard.html');
+});
+
+/**
+ * Handles returning user info when a user is logged in
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/my-info', (req, resp) => {
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  const builder = new xml2js.Builder();
+  if (req.session.username) {
+    db.getUser(req.session.username).then((result) => {
+      Object.keys(result).map((key, idx) => {
+        // escape data result for HTML context
+        result[key] = xssFilters.inHTMLData(result[key]);
+      });
+      // build XML and send it over to front-end
+      const xmlResp = builder.buildObject({user: result});
+      resp.send(xmlResp);
+    }).catch((err) => {
+      console.log(err);
+      resp.status(500);
+      resp.send(builder.buildObject({user: {error: 'Unknown Error'}}));
+    });
+  } else {
+    resp.status(401);
+    resp.send(builder.buildObject({user: {error: 'Unauthorized'}}));
+  }
 });
 
 // listen on port 3000,
