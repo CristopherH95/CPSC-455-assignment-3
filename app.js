@@ -391,12 +391,22 @@ app.get('/my-accounts', (req, resp) => {
   const builder = new xml2js.Builder();
   if (req.session.username) {
     db.getUserAccounts(req.session.username).then((result) => {
-      Object.keys(result).map((key, idx) => {
-        // escape data for HTML context
-        result[key] = xssFilters.inHTMLData(result[key]);
-      });
+      console.log(result);
+      for (let i = 0; i < result.length; i++) {
+        Object.keys(result[i]).map((key, idx) => {
+          // escape data for HTML context
+          result[i][key] = xssFilters.inHTMLData(result[i][key]);
+        });
+      }
+      // form the object for XML
+      const respObj = {accounts: []};
+      for (const r of result) {
+        respObj.accounts.push({account: r});
+      }
+      console.log(result);
       // build XML and send it over to front-end
-      const xmlResp = builder.buildObject({accounts: result});
+      const xmlResp = builder.buildObject(respObj);
+      console.log(xmlResp);
       resp.send(xmlResp);
     }).catch((err) => {
       console.log(err);
