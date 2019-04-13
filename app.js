@@ -372,6 +372,43 @@ app.get('/my-info', (req, resp) => {
   }
 });
 
+/**Handles returning user accounts data when a user is logged in
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/my-accounts', (req, resp) => {
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  const builder = new xml2js.Builder();
+  if (req.session.username) {
+    db.getUserAccounts(req.session.username).then((result) => {
+      Object.keys(result).map((key, idx) => {
+        // escape data for HTML context
+        result[key] = xssFilters.inHTMLData(result[key]);
+      });
+      // build XML and send it over to front-end
+      const xmlResp = builder.buildObject({accounts: result});
+      resp.send(xmlResp);
+    }).catch((err) => {
+      console.log(err);
+      resp.status(500);
+      resp.send(builder.buildObject({user: {error: 'Unknown Error'}}));
+    });
+  } else {
+    resp.status(401);
+    resp.send(builder.buildObject({user: {error: 'Unauthorized'}}));
+  }
+});
+
+/**
+ * Handles user logout, redirects the user to the login page
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/logout', (req, resp) => {
+  req.session.reset();
+  resp.redirect('/');
+});
+
 // listen on port 3000,
 // output a log statement to show that the server should be up
 console.log('Listening on port 3000');
