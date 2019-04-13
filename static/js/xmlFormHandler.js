@@ -154,7 +154,6 @@ window.xmlFormHandler = (function() {
                 req.open('POST', postUrl); // set the destination
                 req.responseType = 'document'; // accept text responses
                 req.setRequestHeader('Content-Type', 'text/xml');
-                req.send(xmlData); // send the data
                 req.onreadystatechange = function() {
                   if (this.readyState === 4) {
                     // when the response is ready, check the status
@@ -173,6 +172,7 @@ window.xmlFormHandler = (function() {
                     }
                   }
                 };
+                req.send(xmlData); // send the data
               }
             });
       },
