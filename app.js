@@ -104,7 +104,7 @@ app.use((req, resp, next) => {
  * @param resp the response
  */
 app.get('/favicon.ico', (req, resp) => {
-  resp.sendFile(__dirname + '/favicon.ico');
+  resp.sendFile(path.join(__dirname, 'favicon.ico'));
 });
 
 /**
@@ -113,7 +113,7 @@ app.get('/favicon.ico', (req, resp) => {
  * @param resp the response
  */
 app.get('/', (req, resp) => {
-  resp.sendFile(__dirname + '/views/index.html');
+  resp.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 /**
@@ -203,7 +203,7 @@ app.post('/login', (req, resp) => {
  * @param resp the response
  */
 app.get('/new-user', (req, resp) => {
-  resp.sendFile(__dirname + '/views/new-user.html');
+  resp.sendFile(path.join(__dirname, 'views', 'new-user.html'));
 });
 
 /**
@@ -341,7 +341,16 @@ app.post('/create-user', async (req, resp) => {
  * @param resp the response
  */
 app.get('/dashboard', (req, resp) => {
-  resp.sendFile(__dirname + '/views/dashboard.html');
+  db.getAccountCount(req.session.username).then((result) => {
+    if (result > 0) {
+      resp.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
+    } else {
+      resp.redirect('/new-account');
+    }
+  }).catch((err) => {
+    console.log(err);
+    resp.send('Unknown error, please try again.');
+  });
 });
 
 /**
@@ -372,7 +381,8 @@ app.get('/my-info', (req, resp) => {
   }
 });
 
-/**Handles returning user accounts data when a user is logged in
+/**
+ * Handles returning user accounts data when a user is logged in
  * @param req the request
  * @param resp the response
  */
@@ -391,12 +401,114 @@ app.get('/my-accounts', (req, resp) => {
     }).catch((err) => {
       console.log(err);
       resp.status(500);
-      resp.send(builder.buildObject({user: {error: 'Unknown Error'}}));
+      resp.send(builder.buildObject({accounts: {error: 'Unknown Error'}}));
     });
   } else {
     resp.status(401);
-    resp.send(builder.buildObject({user: {error: 'Unauthorized'}}));
+    resp.send(builder.buildObject({accounts: {error: 'Unauthorized'}}));
   }
+});
+
+/**
+ * Handles retrieving the possible account types users can create
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/account-types', (req, resp) => {
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  const builder = new xml2js.Builder();
+  db.getAccountTypes().then((result) => { // get the possible account types
+    for (let i = 0; i < result.length; i++) {
+      Object.keys(result[i]).map((key, idx) => {
+        // escape data for HTML context
+        result[i][key] = xssFilters.inHTMLData(result[i][key]);
+      });
+    }
+    // build XML and send it over to front-end
+    const xmlResp = builder.buildObject({types: result});
+    resp.send(xmlResp);
+  }).catch((err) => {
+    console.log(err);
+    resp.status(500);
+    resp.send(builder.buildObject({types: {error: 'Unknown Error'}}));
+  });
+});
+
+/**
+ * Handles returning the page for creating a new bank account
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/new-account', (req, resp) => {
+  resp.sendFile(path.join(__dirname, 'views', 'new-account.html'));
+});
+
+/**
+ * Handles POST requests with XML data for creating
+ * a new bank account
+ * @param req the request
+ * @param resp the response
+ */
+app.post('/create-account', (req, resp) => { 
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  const accountTypes = [];  // create a list of the possible types
+  db.getAccountTypes().then((result) => {
+    for (const i of result) {
+      accountTypes.push(i.account_type);
+    }
+    if (areFormFieldsPresent(req.xml, ['account_type'])) {
+      // form fields are present
+      const choice = req.xml.form.account_type[0] // type choice
+      if (accountTypes.includes(choice)) {
+        // valid account type selected, so insert
+        db.insertAccount({bank_user_id: req.session.username, 
+          account_type: choice, balance: 0}).then(() => {
+            // successfully inserted
+            const builder = new xml2js.Builder();
+            resp.status(201);
+            resp.send(builder.buildObject({result: true}));
+          }).catch((err) => {
+            // unable to insert data
+            console.log(err);
+            resp.status(500);
+            resp.send(buildXmlFormErrorSet([
+              {
+                name: 'account_type',
+                error: 'Failed to insert data, please try again later',
+              },
+            ]));
+          });
+      } else {
+        // the choice given was not valid
+        resp.status(400);
+        resp.send(buildXmlFormErrorSet([
+          {
+            name: 'account_type',
+            error: 'Invalid account type choice',
+          },
+        ]));
+      }
+    } else {
+      // fields were not present
+      resp.status(400);
+      resp.send(buildXmlFormErrorSet([
+        {
+          name: 'account_type',
+          error: 'Required',
+        },
+      ]));
+    }
+  }).catch((err) => {
+    // could not retrieve account types
+    console.log(err);
+    resp.status(500);
+    resp.send(buildXmlFormErrorSet([
+      {
+        name: 'account_type',
+        error: 'Unknown error',
+      },
+    ]));
+  });
 });
 
 /**

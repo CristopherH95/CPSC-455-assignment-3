@@ -50,6 +50,10 @@ let db = Object.defineProperties(
                                  + 'account_type, balance FROM '
                                  + 'bank_user_accounts WHERE bank_user_id=?'),
       },
+      getAccountCountQuery: {
+        value: dbConnect.prepare('SELECT COUNT(*) FROM bank_user_accounts '
+                                 + 'WHERE bank_user_id=?'),
+      },
       getAccountQuery: {
         value: dbConnect.prepare('SELECT account_id, bank_user_id, '
                                  + 'account_type, balance FROM '
@@ -77,6 +81,7 @@ let db = Object.defineProperties(
           this.getUserPassQuery.finalize();
           this.getAllAccountsQuery.finalize();
           this.getAccountQuery.finalize();
+          this.getAccountCountQuery.finalize();
           this.getAccountTypesQuery.finalize();
           this.insertUserQuery.finalize();
           this.insertAccountQuery.finalize();
@@ -115,6 +120,24 @@ let db = Object.defineProperties(
                 reject(err); // failed, reject promise
               } else {
                 resolve(rows); // success, resolve with result
+              }
+            });
+          });
+        },
+        enumerable: true,
+      },
+      getAccountCount: {
+        value: function(userId) {
+          // the context of 'this' may change,
+          // so get a reference to the query here
+          const getAccountCountQuery = this.getAccountCountQuery;
+          return new Promise(function(resolve, reject) {
+            getAccountCountQuery.get(userId, (err, res) => {
+              // run query to get a count of user's accounts
+              if (err) {
+                reject(err); // failed, reject promise
+              } else {
+                resolve(res['COUNT(*)']); // success, resolve with result
               }
             });
           });

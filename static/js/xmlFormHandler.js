@@ -18,7 +18,7 @@ window.xmlFormHandler = (function() {
     serializeForm: {
       value: function(formSelector = 'form') {
         const fields = document.querySelectorAll(
-            formSelector + ' input'
+            formSelector + ' input, ' + formSelector + ' select'
         ); // get all input fields
         let xml = '<?xml version=\'1.0\' standalone=\'yes\'?><form>';
         for (const i of fields) {
@@ -110,7 +110,7 @@ window.xmlFormHandler = (function() {
               const errorElId = field + '-error';
               const errorEl = this.getOrCreateElement('#' + errorElId,
                   {tag: 'p', classes: ['text-danger'], id: errorElId},
-                  'input[name="' + field + '"]');
+                  '[name="' + field + '"]');
               const errorNode = i.querySelector('error');
               if (errorNode) {
                 errorEl.innerText = errorNode.textContent;

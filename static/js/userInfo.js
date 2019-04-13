@@ -40,14 +40,14 @@ function getAccountsInfo() {
 
 // TODO: Implement populating of user data on the page
 window.addEventListener('load', function(ev) {
-  getBasicInfo().then((result) => {
+  getBasicInfo().then(function(result) {
     console.log(result);
-  }).catch((err) => {
+  }).catch(function(err) {
     console.log(err);
   });
-  getAccountsInfo().then((result) => {
+  getAccountsInfo().then(function(result) {
     console.log(result);
-  }).catch((err) => {
+  }).catch(function(err) {
     console.log(err);
   });
 });

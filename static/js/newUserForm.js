@@ -28,7 +28,7 @@ function checkPassword() {
   } else {
     addFeedback('pass-length', true);
   }
-  if (!passVal.split('').some((char) => special.includes(char))) {
+  if (!passVal.split('').some(function(char) { special.includes(char) })) {
     addFeedback('pass-char', false);
   } else {
     addFeedback('pass-char', true);
