@@ -428,15 +428,21 @@ app.get('/my-account/:accountId', (req, resp) => {
     // get data for the account
     db.getAccount(req.params.accountId, 
         req.session.username).then((result) => {
-          Object.keys(result).map((key, idx) => {
-            result[key] = xssFilters.inHTMLData(result[key]);
-          });
-          // build XML and send it over to front-end
-          const xmlResp = builder.buildObject({account: result});
-          resp.send(xmlResp);
+          if (result) {
+            Object.keys(result).map((key, idx) => {
+              result[key] = xssFilters.inHTMLData(result[key]);
+            });
+            // build XML and send it over to front-end
+            const xmlResp = builder.buildObject({account: result});
+            resp.send(xmlResp);
+          } else {
+            const xmlResp = builder.buildObject({account: 'Account not found'});
+            resp.status(404);
+            resp.send(xmlResp);
+          }
         }).catch((err) => {
           console.log(err);
-          const xmlResp = builder.buildObject({account: 'Unknown Error'});
+          const xmlResp = builder.buildObject({account: 'Unknown error'});
           resp.status(500);
           resp.send(xmlResp);
         });
@@ -548,7 +554,6 @@ app.post('/create-account', (req, resp) => {
   });
 });
 
-// TODO: additional docs, debug account updating
 /**
  * Handles updating a specific account from XML data
  * @param req the request
@@ -556,15 +561,16 @@ app.post('/create-account', (req, resp) => {
  */
 app.post('/update-account', (req, resp) => {
   resp.set('Content-Type', 'text/xml'); // set response header for xml
-  if (areFormFieldsPresent(req.xml, ['account', 'action', 'change']) && 
-      req.session.username) {
-    let check = true;
-    const account = req.xml.form.account[0];
+  if (areFormFieldsPresent(req.xml, ['account', 'action', 
+    'change', 'transferAccount']) && req.session.username) {
+    let check = true; // true indicates checks on input passed
+    const account = req.xml.form.account[0];  // get all the values
+    const accountDest = req.xml.form.transferAccount[0];
     const action = req.xml.form.action[0];
     let change = req.xml.form.change[0];
-    const checkChange = validate.positiveNumber(change);
+    const checkChange = validate.positiveNumber(change);  // validate amount
     if (!checkChange.result) {
-      resp.status(400);
+      resp.status(400); // failed validation, send over errors
       resp.send(buildXmlFormErrorSet([
         {
           name: 'change',
@@ -572,10 +578,11 @@ app.post('/update-account', (req, resp) => {
         }
       ]));
       check = false;
-    } else {
+    } else {  // check passed, get amount as a number
       change = parseInt(change);
     }
-    if (!['deposit', 'withdraw'].includes(action)) {
+    // verify that the selected action is a valid choice
+    if (!['deposit', 'withdraw', 'transfer'].includes(action)) {
       resp.status(400);
       resp.send(buildXmlFormErrorSet([
         {
@@ -585,50 +592,146 @@ app.post('/update-account', (req, resp) => {
       ]));
       check = false;
     }
+    // if all checks passed, continue on to perform action
     if (check) {
-      db.getUserAccounts(req.session.username).then((result) => {
-        if (result.some((val) => account === String(val.account_id))) {
-          db.getAccount(account, req.session.username).then((result) => {
-            let accountBal = result.balance;
+      let transfer = false; // behavior is different if transfer
+      db.getUserAccounts(req.session.username).then((accounts) => {
+        // verify that the user owns the selected account
+        if (accounts.some((val) => account === String(val.account_id))) {
+          // user owns the account, get the account's data
+          db.getAccount(account, req.session.username).then((acc) => {
+            let accountBal = acc.balance; // account balance
             if (action === 'deposit') {
-              accountBal += change;
-            } else {
-              accountBal -= change;
-            }
-            db.updateAccount(account, accountBal).then(() => {
-              const builder = new xml2js.Builder();
-              resp.status(202);
-              resp.send(builder.buildObject({result: true}));
-            }).catch((err) => {
-              console.log(err);
-              resp.status(500);
+              accountBal += change; // deposit, add to balance
+            } else if (action === 'withdraw' && accountBal >= change) {
+              accountBal -= change; // withdraw, subtract from balance
+            } else if (action === 'withdraw') {
+              resp.status(400); // not enough money in account for withdraw
               resp.send(buildXmlFormErrorSet([
                 {
                   name: 'change',
-                  error: 'Could update account balance'
+                  error: 'Balance insuffient for withdraw',
                 },
               ]));
-            });
+            } else {
+              transfer = true;  // transer, so must change two accounts
+              // verify that user owns the second account for the transfer
+              // also verify that the transfer account is not the same
+              if (accounts.some((val) => {
+                return accountDest === String(val.account_id)}) && 
+                accountDest !== account) {
+                  // get the account info for the transfer account
+                  db.getAccount(accountDest, 
+                    req.session.username).then((accDest) => {
+                      let accDestBalance = accDest.balance; // account balance
+                      // check that sufficient balance for transfer
+                      if (accountBal >= change) {
+                        accountBal -= change; // take from main account choice
+                        accDestBalance += change; // add to destination account
+                        // update both accounts
+                        db.updateAccount(account, accountBal).then(() => {
+                          db.updateAccount(accountDest, 
+                            accDestBalance).then(() => {
+                              // successfully updated both accounts, send resp
+                              const builder = new xml2js.Builder();
+                              resp.status(202);
+                              resp.send(builder.buildObject({result: true}));
+                            }).catch((err) => {
+                              // database error encountered
+                              console.log(err);
+                              resp.status(500);
+                              resp.send(buildXmlFormErrorSet([
+                                {
+                                  name: 'change',
+                                  error: 'Could update account balance',
+                                },
+                              ]));
+                            });
+                        }).catch((err) => {
+                          // database error encountered
+                          console.log(err);
+                          resp.status(500);
+                          resp.send(buildXmlFormErrorSet([
+                            {
+                              name: 'change',
+                              error: 'Could update account balance',
+                            },
+                          ]));
+                        });
+                      } else {
+                        // not enough money in account for transfer
+                        resp.status(400);
+                        resp.send(buildXmlFormErrorSet([
+                          {
+                            name: 'change',
+                            error: 'Balance insuffient for transfer',
+                          },
+                        ]));
+                      }
+                  }).catch((err) => {
+                    // failed to verify account info
+                    console.log(err);
+                    resp.status(500);
+                    resp.send(buildXmlFormErrorSet([
+                      {
+                        name: 'transferAccount',
+                        error: 'Could not confirm account',
+                      },
+                    ]));
+                  });
+                } else {
+                  // failed to verify account info for transfer
+                  resp.status(400);
+                  resp.send(buildXmlFormErrorSet([
+                    {
+                      name: 'transferAccount',
+                      error: 'Could not confirm account '
+                             + '(ensure that account choices are different)',
+                    },
+                  ]));
+                }
+            }
+            if (!transfer) {
+              // not a transfer, so just update the main account choice
+              db.updateAccount(account, accountBal).then(() => {
+                const builder = new xml2js.Builder();
+                resp.status(202);
+                resp.send(builder.buildObject({result: true}));
+              }).catch((err) => {
+                // database error encountered
+                console.log(err);
+                resp.status(500);
+                resp.send(buildXmlFormErrorSet([
+                  {
+                    name: 'change',
+                    error: 'Could update account balance',
+                  },
+                ]));
+              });
+            }
           }).catch((err) => {
+            // database error encountered
             console.log(err);
             resp.status(500);
             resp.send(buildXmlFormErrorSet([
               {
                 name: 'account',
-                error: 'Could not confirm account'
+                error: 'Could not confirm account',
               },
             ]));
           });
         } else {
+          // could not verify that the user own's the account
           resp.status(401);
           resp.send(buildXmlFormErrorSet([
             {
               name: 'account',
-              error: 'Could not verify account ownership'
+              error: 'Could not verify account ownership',
             },
           ]));
         }
       }).catch((err) => {
+        // database error encountered
         console.log(err);
         resp.status(500);
         resp.send(buildXmlFormErrorSet([
@@ -640,6 +743,7 @@ app.post('/update-account', (req, resp) => {
       });
     }
   } else {
+    // could not get the form fields needed
     resp.status(400);
     resp.send(buildXmlFormErrorSet([
       {

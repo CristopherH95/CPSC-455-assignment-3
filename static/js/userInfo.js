@@ -1,7 +1,7 @@
 'use strict';
 
 const accountOptions = [];
-const actionOptions = ['deposit', 'withdraw'];
+const actionOptions = ['deposit', 'withdraw', 'transfer'];
 
 /**
  * Gets XML data for the currently logged in user
@@ -68,7 +68,7 @@ function getAccountInfo(accountId) {
 }
 
 /**
- * Handler for change events on the account action choice
+ * Handler for change events on the account choice
  * gets and sets account data for display on the page
  */
 function accountChangeHandler() {
@@ -86,6 +86,19 @@ function accountChangeHandler() {
   });
 }
 
+/**
+ * Handler for change events on the account action choice
+ * reveals the second select element for transfers
+ */
+function actionChangeHandler() {
+  const choice = this.options[this.selectedIndex].value;
+  if (choice === 'transfer') {
+    document.getElementById('transfer-row').classList.remove('d-none');
+  } else {
+    document.getElementById('transfer-row').classList.add('d-none');
+  }
+}
+
 // TODO: Implement populating of user data on the page
 window.addEventListener('load', function(ev) {
   getBasicInfo().then(function(result) {
@@ -98,25 +111,37 @@ window.addEventListener('load', function(ev) {
   getAccounts().then(function(result) {
     console.log(result);
     const accountIds = result.getElementsByTagName('account_id');
-    const select = document.getElementById('account-choice');
+    const select = document.querySelectorAll('.user-accounts');
+    const account = document.getElementById('account-choice');
+    const action = document.getElementById('account-action');
     let opt = null;
-    for (const aId of accountIds) {
-      opt = document.createElement('option');
-      opt.text = aId.textContent;
-      accountOptions.push(opt.text);
-      select.add(opt);
+    for (const s of select) {
+      for (const aId of accountIds) {
+        opt = document.createElement('option');
+        opt.text = aId.textContent;
+        if (!accountOptions.includes(opt.text)) {
+          accountOptions.push(opt.text);
+        }
+        s.add(opt);
+      }
     }
-    select.addEventListener(
+    account.addEventListener(
       'change', accountChangeHandler
     );
-    accountChangeHandler.call(select);
+    accountChangeHandler.call(account);
+    action.addEventListener(
+      'change', actionChangeHandler
+    );
+    actionChangeHandler.call(action);
   }).catch(function(err) {
     console.log(err);
   });
-  const inputs = ['account', 'action', 'change'];
+  const inputs = ['account', 'action', 'change', 'transferAccount'];
   xmlFormHandler.bindFormSubmit('/update-account', inputs, function(formSelector) {
     const accountSelect = document.getElementById('account-choice');
     const accountChoice = accountSelect.options[accountSelect.selectedIndex].text;
+    const transferSelect = document.getElementById('account-transfer');
+    const transferAcc = transferSelect.options[transferSelect.selectedIndex].text;
     const actionSelect = document.getElementById('account-action');
     const actionChoice = actionSelect.options[actionSelect.selectedIndex].value;
     const changeValue = document.getElementById('account-change').value;
@@ -133,6 +158,12 @@ window.addEventListener('load', function(ev) {
                 {tag: 'p', classes: ['text-danger'], id: 'action-error'},
                 '[name="action"]');
       errEl.innerText = 'Invalid action choice';
+      valid = false;
+    } else if (actionChoice === 'transfer' && transferAcc === accountChoice) {
+      const errEl = xmlFormHandler.getOrCreateElement('#transferAccount-error',
+                {tag: 'p', classes: ['text-danger'], id: 'transferAccount-error'},
+                '[name="transferAccount"]');
+      errEl.innerText = 'Accounts must not be the same';
       valid = false;
     }
     const numberCheck = validate.positiveNumber(changeValue);
