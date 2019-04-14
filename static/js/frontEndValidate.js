@@ -196,6 +196,27 @@ window.validate = (function() {
       },
       enumerable: true,
     },
+    positiveNumber: {
+      value: function(input) {
+        const inputStr = String(input);
+        if (!inputStr) {
+          return {result: false, reason: 'No values provided'};
+        } else if (inputStr.length === 1) {
+          if (!/^[1-9]$/.test(inputStr)) {
+            return {result: false, reason: 'Positive numbers only'};
+          } else {
+            return {result: true, reason: ''};
+          }
+        } else {
+          if (!/^[1-9][0-9]+$/.test(inputStr)) {
+            return {result: false, reason: 'Positive numbers only'}
+          } else {
+            return {result: true, reason: ''};
+          }
+        }
+      },
+      enumerable: true,
+    },
   });
   return namespace;
 })();

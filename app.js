@@ -550,6 +550,116 @@ app.post('/create-account', (req, resp) => {
   });
 });
 
+// TODO: additional docs, debug account updating
+/**
+ * Handles updating a specific account from XML data
+ * @param req the request
+ * @param resp the response
+ */
+app.post('/update-account', (req, resp) => {
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  if (areFormFieldsPresent(req.xml, ['account', 'action', 'change']) && 
+      req.session.username) {
+    let check = true;
+    const account = req.xml.form.account[0];
+    const action = req.xml.form.action[0];
+    const change = req.xml.form.change[0];
+    const checkChange = validate.positiveNumber(change);
+    if (!checkChange.result) {
+      resp.status(400);
+      resp.send(buildXmlFormErrorSet([
+        {
+          name: 'change',
+          error: checkChange.reason,
+        }
+      ]));
+      check = false;
+    }
+    if (!['deposit', 'withdraw'].includes(action)) {
+      resp.status(400);
+      resp.send(buildXmlFormErrorSet([
+        {
+          name: 'action',
+          error: 'Invalid action choice',
+        }
+      ]));
+      check = false;
+    }
+    if (check) {
+      db.getUserAccounts(req.session.username).then((result) => {
+        console.log(result);
+        if (result.some((val) => account === String(val.account_id))) {
+          db.getAccount(account, req.session.username).then((result) => {
+            console.log(result);
+            let accountBal = result.balance;
+            if (action === 'deposit') {
+              accountBal += change;
+            } else {
+              accountBal -= change;
+            }
+            db.updateAccount(account, accountBal).then(() => {
+              const builder = new xml2js.Builder();
+              resp.status(202);
+              resp.send(builder.buildObject({result: true}));
+            }).catch((err) => {
+              console.log(err);
+              resp.status(500);
+              resp.send(buildXmlFormErrorSet([
+                {
+                  name: 'change',
+                  error: 'Could update account balance'
+                },
+              ]));
+            });
+          }).catch((err) => {
+            console.log(err);
+            resp.status(500);
+            resp.send(buildXmlFormErrorSet([
+              {
+                name: 'account',
+                error: 'Could not confirm account'
+              },
+            ]));
+          });
+        } else {
+          resp.status(401);
+          resp.send(buildXmlFormErrorSet([
+            {
+              name: 'account',
+              error: 'Could not verify account ownership'
+            },
+          ]));
+        }
+      }).catch((err) => {
+        console.log(err);
+        resp.status(500);
+        resp.send(buildXmlFormErrorSet([
+          {
+            name: 'change',
+            error: 'Unknown error',
+          },
+        ]));
+      });
+    }
+  } else {
+    resp.status(400);
+    resp.send(buildXmlFormErrorSet([
+      {
+        name: 'account',
+        error: 'Required',
+      },
+      {
+        name: 'action',
+        error: 'Required',
+      },
+      {
+        name: 'change',
+        error: 'Required',
+      },
+    ]));
+  }
+});
+
 /**
  * Handles user logout, redirects the user to the login page
  * @param req the request
