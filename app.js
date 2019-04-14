@@ -391,7 +391,6 @@ app.get('/my-accounts', (req, resp) => {
   const builder = new xml2js.Builder();
   if (req.session.username) {
     db.getUserAccounts(req.session.username).then((result) => {
-      console.log(result);
       for (let i = 0; i < result.length; i++) {
         Object.keys(result[i]).map((key, idx) => {
           // escape data for HTML context
@@ -403,10 +402,8 @@ app.get('/my-accounts', (req, resp) => {
       for (const r of result) {
         respObj.accounts.push({account: r});
       }
-      console.log(result);
       // build XML and send it over to front-end
       const xmlResp = builder.buildObject(respObj);
-      console.log(xmlResp);
       resp.send(xmlResp);
     }).catch((err) => {
       console.log(err);
@@ -418,6 +415,38 @@ app.get('/my-accounts', (req, resp) => {
     resp.send(builder.buildObject({accounts: {error: 'Unauthorized'}}));
   }
 });
+
+/**
+ * Handles retrieving information on a user's specific account
+ * @param req the request
+ * @param resp the response
+ */
+app.get('/my-account/:accountId', (req, resp) => {
+  resp.set('Content-Type', 'text/xml'); // set response header for xml
+  const builder = new xml2js.Builder();
+  if (req.session.username) {
+    // get data for the account
+    db.getAccount(req.params.accountId, 
+        req.session.username).then((result) => {
+          Object.keys(result).map((key, idx) => {
+            result[key] = xssFilters.inHTMLData(result[key]);
+          });
+          // build XML and send it over to front-end
+          const xmlResp = builder.buildObject({account: result});
+          resp.send(xmlResp);
+        }).catch((err) => {
+          console.log(err);
+          const xmlResp = builder.buildObject({account: 'Unknown Error'});
+          resp.status(500);
+          resp.send(xmlResp);
+        });
+  } else {
+    resp.status(401);
+    resp.send(builder.buildObject({account: {error: 'Unauthorized'}}));
+  }
+});
+
+// TODO: frontEndValidate number check, form handler for account changes
 
 /**
  * Handles retrieving the possible account types users can create

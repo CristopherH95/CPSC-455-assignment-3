@@ -2,7 +2,7 @@
 
 /**
  * Gets XML data for the currently logged in user
- * @return {Document} the resulting XML
+ * @return {Promise<Document>} the resulting XML
  */
 function getBasicInfo() {
   return new Promise(function(resolve, reject) {
@@ -21,10 +21,36 @@ function getBasicInfo() {
   });
 }
 
-function getAccountsInfo() {
+/**
+ * Gets XML data for all the user's current bank accounts
+ * @return {Promise<Document>} the resulting XML
+ */
+function getAccounts() {
   return new Promise(function(resolve, reject) {
     const xHttpReq = new XMLHttpRequest();
     xHttpReq.open('GET', '/my-accounts');
+    xHttpReq.responseType = 'document'; // accept text responses
+    xHttpReq.onreadystatechange = function() {
+      if (this.readyState === 4 && 
+          this.status >= 200 && this.status <= 299) {
+            resolve(xHttpReq.responseXML);
+      } else if (this.readyState === 4) {
+        reject(xHttpReq.responseXML);
+      }
+    };
+    xHttpReq.send();
+  });
+}
+
+/**
+ * Gets XML data for a specific account
+ * @param {number} accountId the account number
+ * @return {Promise<Document>} the resulting XML
+ */
+function getAccountInfo(accountId) {
+  return new Promise(function(resolve, reject) {
+    const xHttpReq = new XMLHttpRequest();
+    xHttpReq.open('GET', '/my-account/' + String(accountId));
     xHttpReq.responseType = 'document'; // accept text responses
     xHttpReq.onreadystatechange = function() {
       if (this.readyState === 4 && 
@@ -45,7 +71,7 @@ window.addEventListener('load', function(ev) {
   }).catch(function(err) {
     console.log(err);
   });
-  getAccountsInfo().then(function(result) {
+  getAccounts().then(function(result) {
     console.log(result);
   }).catch(function(err) {
     console.log(err);

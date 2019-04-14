@@ -46,9 +46,8 @@ let db = Object.defineProperties(
         value: dbConnect.prepare('SELECT pass FROM bank_users WHERE user_id=?'),
       },
       getAllAccountsQuery: {
-        value: dbConnect.prepare('SELECT account_id, bank_user_id, '
-                                 + 'account_type, balance FROM '
-                                 + 'bank_user_accounts WHERE bank_user_id=?'),
+        value: dbConnect.prepare('SELECT account_id FROM bank_user_accounts'
+                                 + ' WHERE bank_user_id=?'),
       },
       getAccountCountQuery: {
         value: dbConnect.prepare('SELECT COUNT(*) FROM bank_user_accounts '
@@ -57,7 +56,8 @@ let db = Object.defineProperties(
       getAccountQuery: {
         value: dbConnect.prepare('SELECT account_id, bank_user_id, '
                                  + 'account_type, balance FROM '
-                                 + 'bank_user_accounts WHERE account_id=?'),
+                                 + 'bank_user_accounts WHERE account_id=?'
+                                 + ' AND bank_user_id=?'),
       },
       getAccountTypesQuery: {
         value: dbConnect.prepare('SELECT account_type FROM bank_account_types'),
@@ -145,12 +145,12 @@ let db = Object.defineProperties(
         enumerable: true,
       },
       getAccount: {
-        value: function(accountId) {
+        value: function(accountId, userId) {
           // the context of 'this' may change,
           // so get a reference to the query here
           const getAccountQuery = this.getAccountQuery;
           return new Promise(function(resolve, reject) {
-            getAccountQuery.get(accountId, (err, row) => {
+            getAccountQuery.get(accountId, userId, (err, row) => {
               // run query to get a specific account
               if (err) {
                 reject(err); // failed, reject promise

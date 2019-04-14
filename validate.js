@@ -22,6 +22,7 @@
  *                          uppercase character, lowercase character, digit,
  *                          and special character
  *                          as well as being sufficiently long
+ * @property {function} positiveNumber checks if the value is a positive number
  * @see https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Authentication_Cheat_Sheet.md for password complexity guidelines used
  */
 let validate = {
@@ -213,10 +214,29 @@ let validate = {
         check.result = false;
         check.reason += ';';
       }
-      check.reason += 'Must not contain 2 identical characters in a row';
+      check.reason += 'Must not contain more than'
+                      + '2 identical characters in a row';
     }
     return check;
   },
+  positiveNumber: function(input) {
+    const inputStr = String(input);
+    if (!inputStr) {
+      return {result: false, reason: 'No values provided'};
+    } else if (inputStr.length === 1) {
+      if (!/^[1-9]$/.test(inputStr)) {
+        return {result: false, reason: 'Positive numbers only'};
+      } else {
+        return {result: true, reason: ''};
+      }
+    } else {
+      if (!/^[1-9][0-9]+$/.test(inputStr)) {
+        return {result: false, reason: 'Positive numbers only'}
+      } else {
+        return {result: true, reason: ''};
+      }
+    }
+  }
 };
 // freeze validate object so it cannot be altered
 validate = Object.freeze(validate);
