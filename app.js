@@ -446,8 +446,6 @@ app.get('/my-account/:accountId', (req, resp) => {
   }
 });
 
-// TODO: frontEndValidate number check, form handler for account changes
-
 /**
  * Handles retrieving the possible account types users can create
  * @param req the request
@@ -563,7 +561,7 @@ app.post('/update-account', (req, resp) => {
     let check = true;
     const account = req.xml.form.account[0];
     const action = req.xml.form.action[0];
-    const change = req.xml.form.change[0];
+    let change = req.xml.form.change[0];
     const checkChange = validate.positiveNumber(change);
     if (!checkChange.result) {
       resp.status(400);
@@ -574,6 +572,8 @@ app.post('/update-account', (req, resp) => {
         }
       ]));
       check = false;
+    } else {
+      change = parseInt(change);
     }
     if (!['deposit', 'withdraw'].includes(action)) {
       resp.status(400);
@@ -587,10 +587,8 @@ app.post('/update-account', (req, resp) => {
     }
     if (check) {
       db.getUserAccounts(req.session.username).then((result) => {
-        console.log(result);
         if (result.some((val) => account === String(val.account_id))) {
           db.getAccount(account, req.session.username).then((result) => {
-            console.log(result);
             let accountBal = result.balance;
             if (action === 'deposit') {
               accountBal += change;

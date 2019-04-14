@@ -215,7 +215,7 @@ let db = Object.defineProperties(
           // so get a reference to the query here
           const updateAccountQuery = this.updateAccountQuery;
           return new Promise(function(resolve, reject) {
-            updateAccountQuery.run(accountId, newBalance, (err) => {
+            updateAccountQuery.run(newBalance, accountId, (err) => {
               // run query to update account
               if (err) {
                 reject(err); // failed, reject promise
