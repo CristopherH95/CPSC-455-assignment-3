@@ -37,7 +37,9 @@ window.addEventListener('load', function(ev) {
     // add all the account types from the XML response to the select
     for (const t of types) {
       opt = document.createElement('option');
-      opt.text = t.textContent;
+      opt.text = DOMPurify.sanitize(
+        t.textContent
+      );
       possibleOptions.push(opt.text);
       typeSelect.add(opt);
     }

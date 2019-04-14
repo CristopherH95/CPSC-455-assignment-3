@@ -75,10 +75,18 @@ function accountChangeHandler() {
   const choice = this.options[this.selectedIndex].text; // get selected choice
   getAccountInfo(choice).then(function(result) { // get account info for choice
     // set the text on the page to display the account info from the server
-    const aId = result.querySelector('account_id').textContent;
-    const aType = result.querySelector('account_type').textContent;
-    const bal = result.querySelector('balance').textContent;
-    document.querySelector('.account-id').innerText = aId + ' (' + aType + ')';
+    const aId = DOMPurify.sanitize(
+      result.querySelector('account_id').textContent
+    );
+    const aType = DOMPurify.sanitize(
+      result.querySelector('account_type').textContent
+    );
+    const bal = DOMPurify.sanitize(
+      result.querySelector('balance').textContent
+    );
+    document.querySelector('.account-id').innerText = DOMPurify.sanitize(
+      aId + ' (' + aType + ')'
+    );
     document.querySelector('.account-bal').innerText = bal;
   }).catch(function(err) {
     // failed to retrieve account data
@@ -106,7 +114,9 @@ function actionChangeHandler() {
 window.addEventListener('load', function(ev) {
   getBasicInfo().then(function(result) {
     // get the user's info from the server to display
-    const userName = result.querySelector('first_name').textContent;
+    const userName = DOMPurify.sanitize(
+      result.querySelector('first_name').textContent
+    );
     document.querySelector('.user-name').innerText = userName;
   }).catch(function(err) {
     console.log(err);
@@ -121,7 +131,10 @@ window.addEventListener('load', function(ev) {
     for (const s of select) {
       for (const aId of accountIds) {
         opt = document.createElement('option'); // create option
-        opt.text = aId.textContent; // set option content to data from server
+        // set option content to data from server
+        opt.text = DOMPurify.sanitize(
+          aId.textContent
+        );
         if (!accountOptions.includes(opt.text)) {
           accountOptions.push(opt.text);  // record the valid accounts
         }
