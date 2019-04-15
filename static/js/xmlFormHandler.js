@@ -113,7 +113,7 @@ window.xmlFormHandler = (function() {
                   '[name="' + field + '"]');
               const errorNode = i.querySelector('error');
               if (errorNode) {
-                errorEl.innerText = errorNode.textContent;
+                errorEl.textContent = errorNode.textContent;
               }
               break;
             }

@@ -84,10 +84,10 @@ function accountChangeHandler() {
     const bal = DOMPurify.sanitize(
       result.querySelector('balance').textContent
     );
-    document.querySelector('.account-id').innerText = DOMPurify.sanitize(
+    document.querySelector('.account-id').textContent = DOMPurify.sanitize(
       aId + ' (' + aType + ')'
     );
-    document.querySelector('.account-bal').innerText = bal;
+    document.querySelector('.account-bal').textContent = bal;
   }).catch(function(err) {
     // failed to retrieve account data
     console.log(err);
@@ -117,7 +117,7 @@ window.addEventListener('load', function(ev) {
     const userName = DOMPurify.sanitize(
       result.querySelector('first_name').textContent
     );
-    document.querySelector('.user-name').innerText = userName;
+    document.querySelector('.user-name').textContent = userName;
   }).catch(function(err) {
     console.log(err);
   });
@@ -172,7 +172,7 @@ window.addEventListener('load', function(ev) {
       const errEl = xmlFormHandler.getOrCreateElement('#account-error',
                 {tag: 'p', classes: ['text-danger'], id: 'account-error'},
                 '[name="account"]');
-      errEl.innerText = 'Invalid account option';
+      errEl.textContent = 'Invalid account option';
       valid = false;  // invalid
     }
     if (!actionOptions.includes(actionChoice)) {
@@ -180,14 +180,14 @@ window.addEventListener('load', function(ev) {
       const errEl = xmlFormHandler.getOrCreateElement('#action-error',
                 {tag: 'p', classes: ['text-danger'], id: 'action-error'},
                 '[name="action"]');
-      errEl.innerText = 'Invalid action choice';
+      errEl.textContent = 'Invalid action choice';
       valid = false;  // invalid
     } else if (actionChoice === 'transfer' && transferAcc === accountChoice) {
       // if the action is a transfer, cannot transfer to and from same account
       const errEl = xmlFormHandler.getOrCreateElement('#transferAccount-error',
                 {tag: 'p', classes: ['text-danger'], id: 'transferAccount-error'},
                 '[name="transferAccount"]');
-      errEl.innerText = 'Accounts must not be the same';
+      errEl.textContent = 'Accounts must not be the same';
       valid = false;  // invalid
     }
     const numberCheck = validate.positiveNumber(changeValue);
@@ -196,7 +196,7 @@ window.addEventListener('load', function(ev) {
       const errEl = xmlFormHandler.getOrCreateElement('#change-error',
                 {tag: 'p', classes: ['text-danger'], id: 'change-error'},
                 '[name="change"]');
-      errEl.innerText = numberCheck.reason;
+      errEl.textContent = numberCheck.reason;
       valid = false;  // invalid
     }
 

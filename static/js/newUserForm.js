@@ -96,7 +96,7 @@ window.addEventListener('load', function(ev) {
             const errEl = xmlFormHandler.getOrCreateElement('#' + i + '-error',
                 {tag: 'p', classes: ['text-danger'], id: i + '-error'},
                 'input[name="' + i + '"]');
-            errEl.innerText = check.reason;
+            errEl.textContent = check.reason;
           }
         }
         if (valid === true) {

@@ -37,9 +37,7 @@ window.addEventListener('load', function(ev) {
     // add all the account types from the XML response to the select
     for (const t of types) {
       opt = document.createElement('option');
-      opt.text = DOMPurify.sanitize(
-        t.textContent
-      );
+      opt.text = t.textContent;
       possibleOptions.push(opt.text);
       typeSelect.add(opt);
     }
@@ -53,7 +51,7 @@ window.addEventListener('load', function(ev) {
           const errEl = xmlFormHandler.getOrCreateElement('#account_type-error',
                 {tag: 'p', classes: ['text-danger'], id: 'account_type-error'},
                 '#account-type');
-          errEl.innerText = 'Invalid account type choice';
+          errEl.textContent = 'Invalid account type choice';
           return false;
         } else {
           // valid, clean up any errors
