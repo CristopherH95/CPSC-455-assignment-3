@@ -7,9 +7,11 @@ const sessions = require('client-sessions');
 const validate = require('./validate');
 const xml2js = require('xml2js');
 const xssFilters = require('xss-filters');
+const Tracker = require('./attemptTracker');
 
 const app = express();
 const unprotectedPaths = ['/', '/login', '/new-user', '/create-user'];
+const attempts = {};
 
 // Set content security policy to allow content from self only
 app.use(helmet.contentSecurityPolicy({
@@ -180,6 +182,9 @@ app.post('/login', (req, resp) => {
     resp.send(xmlResp);
     check = false; // skip any checks
   }
+  if (check && attempts[userName]) {
+    check = attempts[userName].isLocked();
+  }
   // check if username/password combo is valid in database
   if (check) {
     db.validateUser(userName, password).then((result) => {
@@ -190,6 +195,11 @@ app.post('/login', (req, resp) => {
         const xmlResp = buildXmlFormErrorSet([{
           name: 'password', error: 'Invalid password/username',
         }]);
+        if (!attempts[userName]) {
+          attempts[userName] = new Tracker(userName);
+          
+        }
+        attempts[userName].addAttempt();
         resp.status(401);
         resp.send(xmlResp);
       }
