@@ -117,7 +117,23 @@ window.addEventListener('load', function(ev) {
     const userName = DOMPurify.sanitize(
       result.querySelector('first_name').textContent
     );
+    const userStreet = DOMPurify.sanitize(
+      result.querySelector('street').textContent
+    );
+    const userCity = DOMPurify.sanitize(
+      result.querySelector('city').textContent
+    );
+    const userState = DOMPurify.sanitize(
+      result.querySelector('country_state').textContent
+    );
+    const userCountry = DOMPurify.sanitize(
+      result.querySelector('country').textContent
+    );
     document.querySelector('.user-name').textContent = userName;
+    document.querySelector('.user-street').textContent = userStreet;
+    document.querySelector('.user-city').textContent = userCity;
+    document.querySelector('.user-state').textContent = userState;
+    document.querySelector('.user-country').textContent = userCountry;
   }).catch(function(err) {
     console.log(err);
   });
