@@ -189,6 +189,9 @@ app.post('/login', (req, resp) => {
   if (check) {
     db.validateUser(userName, password).then((result) => {
       if (result === true) {
+        if (attempts[userName]) {
+          delete attempts[userName];  // remove attempt tracker
+        }
         req.session.username = userName;
         resp.send('OK');
       } else {
