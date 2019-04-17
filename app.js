@@ -166,6 +166,7 @@ function buildXmlFormErrorSet(errors) {
  */
 app.post('/login', (req, resp) => {
   let check = true; // indicator to run checks
+  let locked = false; // send error if locked
   let userName = null;
   let password = null;
   resp.set('Content-Type', 'text/xml'); // set response header for xml
@@ -183,7 +184,8 @@ app.post('/login', (req, resp) => {
     check = false; // skip any checks
   }
   if (check && attempts[userName]) {
-    check = attempts[userName].isLocked();
+    check = !attempts[userName].isLocked();
+    locked = !check;
   }
   // check if username/password combo is valid in database
   if (check) {
@@ -207,6 +209,12 @@ app.post('/login', (req, resp) => {
         resp.send(xmlResp);
       }
     });
+  } else if (locked) {
+    const xmlResp = buildXmlFormErrorSet([{
+      name: 'password', error: 'Invalid password/username',
+    }]);
+    resp.status(401);
+    resp.send(xmlResp);
   }
 });
 
