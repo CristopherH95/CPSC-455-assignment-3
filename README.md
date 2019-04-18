@@ -9,6 +9,10 @@ After finishing this, run ```npm start``` or ```node app.js``` to launch the ser
 
 ## Application Design
 
+This web app uses input validation, output sanitization, XSS headers, and CSP headers to protect against XSS attacks.
+For broken authentication protection, this web app locks accounts on repeated login attempts, requires strict constraints on
+passwords, and prevents access to data not associated with a logged in user.
+
 ### User Data
 
 The application takes the following input for user information:
