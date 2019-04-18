@@ -197,6 +197,7 @@ app.post('/login', (req, resp) => {
         req.session.username = userName;
         resp.send('OK');
       } else {
+        console.log('Failed login attempt for ' + String(userName));
         const xmlResp = buildXmlFormErrorSet([{
           name: 'password', error: 'Invalid password/username',
         }]);
@@ -209,6 +210,9 @@ app.post('/login', (req, resp) => {
       }
     });
   } else if (locked) {
+    console.log(
+        String(userName) + ' attempted to login, but their account is locked'
+    );
     const xmlResp = buildXmlFormErrorSet([{
       name: 'password', error: 'Invalid password/username',
     }]);
