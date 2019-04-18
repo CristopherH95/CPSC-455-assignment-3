@@ -3,6 +3,10 @@
 // a global for checking that selected options are valid
 window.possibleOptions = [];
 
+/**
+ * Retrieves the possible account types from the server database
+ * @return {Promise<document>} the response XML
+ */
 function getAccountTypes() {
   return new Promise(function(resolve, reject) {
     const xHttpReq = new XMLHttpRequest();
@@ -10,10 +14,10 @@ function getAccountTypes() {
     xHttpReq.responseType = 'document'; // accept text responses
     xHttpReq.onreadystatechange = function() {
       // check if request complete
-      if (this.readyState === 4 && 
+      if (this.readyState === 4 &&
           this.status >= 200 && this.status <= 299) {
-            // request complete and successful, resolve
-            resolve(xHttpReq.responseXML);
+        // request complete and successful, resolve
+        resolve(xHttpReq.responseXML);
       } else if (this.readyState === 4) {
         // complete, but not successful, reject
         reject(xHttpReq.responseXML);
@@ -42,23 +46,25 @@ window.addEventListener('load', function(ev) {
       typeSelect.add(opt);
     }
     // bind the form submission
-    xmlFormHandler.bindFormSubmit('/create-account', 
-      inputNames, function() {
-        const select = document.getElementById('account-type');
-        const value = select.options[select.selectedIndex].text;
-        // if the option is not valid, show an error
-        if (!possibleOptions.includes(value)) {
-          const errEl = xmlFormHandler.getOrCreateElement('#account_type-error',
+    xmlFormHandler.bindFormSubmit('/create-account',
+        inputNames, function() {
+          const select = document.getElementById('account-type');
+          const value = select.options[select.selectedIndex].text;
+          // if the option is not valid, show an error
+          if (!possibleOptions.includes(value)) {
+            const errEl = xmlFormHandler.getOrCreateElement(
+                '#account_type-error',
                 {tag: 'p', classes: ['text-danger'], id: 'account_type-error'},
-                '#account-type');
-          errEl.textContent = 'Invalid account type choice';
-          return false;
-        } else {
+                '#account-type'
+            );
+            errEl.textContent = 'Invalid account type choice';
+            return false;
+          } else {
           // valid, clean up any errors
-          xmlFormHandler.cleanupErrors(['account_type']);
-          return true;
-        }
-      }, 'form', '/dashboard');
+            xmlFormHandler.cleanupErrors(['account_type']);
+            return true;
+          }
+        }, 'form', '/dashboard');
   }).catch(function(err) {
     console.log(err); // couldn't get the account types from the database
     alert('Could not retrieve account types, please try again.');

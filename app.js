@@ -92,7 +92,7 @@ app.use((req, resp, next) => {
 });
 
 app.use((req, resp, next) => {
-  if (req.session.username && (req.url === '/' || req.url === '/new-user')) {
+  if (req.session.username && (unprotectedPaths.includes(req.url))) {
     console.log('user already authenticated, redirecting');
     resp.redirect('/dashboard');
   } else {
@@ -190,7 +190,7 @@ app.post('/login', (req, resp) => {
     db.validateUser(userName, password).then((result) => {
       if (result === true) {
         if (attempts[userName]) {
-          delete attempts[userName];  // remove attempt tracker
+          delete attempts[userName]; // remove attempt tracker
         }
         req.session.username = userName;
         resp.send('OK');
@@ -200,7 +200,6 @@ app.post('/login', (req, resp) => {
         }]);
         if (!attempts[userName]) {
           attempts[userName] = new Tracker(userName);
-          
         }
         attempts[userName].addAttempt();
         resp.status(401);
@@ -439,26 +438,26 @@ app.get('/my-account/:accountId', (req, resp) => {
   const builder = new xml2js.Builder();
   if (req.session.username) {
     // get data for the account
-    db.getAccount(req.params.accountId, 
+    db.getAccount(req.params.accountId,
         req.session.username).then((result) => {
-          if (result) {
-            Object.keys(result).map((key, idx) => {
-              result[key] = xssFilters.inHTMLData(result[key]);
-            });
-            // build XML and send it over to front-end
-            const xmlResp = builder.buildObject({account: result});
-            resp.send(xmlResp);
-          } else {
-            const xmlResp = builder.buildObject({account: 'Account not found'});
-            resp.status(404);
-            resp.send(xmlResp);
-          }
-        }).catch((err) => {
-          console.log(err);
-          const xmlResp = builder.buildObject({account: 'Unknown error'});
-          resp.status(500);
-          resp.send(xmlResp);
+      if (result) {
+        Object.keys(result).map((key, idx) => {
+          result[key] = xssFilters.inHTMLData(result[key]);
         });
+        // build XML and send it over to front-end
+        const xmlResp = builder.buildObject({account: result});
+        resp.send(xmlResp);
+      } else {
+        const xmlResp = builder.buildObject({account: 'Account not found'});
+        resp.status(404);
+        resp.send(xmlResp);
+      }
+    }).catch((err) => {
+      console.log(err);
+      const xmlResp = builder.buildObject({account: 'Unknown error'});
+      resp.status(500);
+      resp.send(xmlResp);
+    });
   } else {
     resp.status(401);
     resp.send(builder.buildObject({account: {error: 'Unauthorized'}}));
@@ -505,35 +504,35 @@ app.get('/new-account', (req, resp) => {
  * @param req the request
  * @param resp the response
  */
-app.post('/create-account', (req, resp) => { 
+app.post('/create-account', (req, resp) => {
   resp.set('Content-Type', 'text/xml'); // set response header for xml
-  const accountTypes = [];  // create a list of the possible types
+  const accountTypes = []; // create a list of the possible types
   db.getAccountTypes().then((result) => {
     for (const i of result) {
       accountTypes.push(i.account_type);
     }
     if (areFormFieldsPresent(req.xml, ['account_type'])) {
       // form fields are present
-      const choice = req.xml.form.account_type[0] // type choice
+      const choice = req.xml.form.account_type[0]; // type choice
       if (accountTypes.includes(choice)) {
         // valid account type selected, so insert
-        db.insertAccount({bank_user_id: req.session.username, 
+        db.insertAccount({bank_user_id: req.session.username,
           account_type: choice, balance: 0}).then(() => {
-            // successfully inserted
-            const builder = new xml2js.Builder();
-            resp.status(201);
-            resp.send(builder.buildObject({result: true}));
-          }).catch((err) => {
-            // unable to insert data
-            console.log(err);
-            resp.status(500);
-            resp.send(buildXmlFormErrorSet([
-              {
-                name: 'account_type',
-                error: 'Failed to insert data, please try again later',
-              },
-            ]));
-          });
+          // successfully inserted
+          const builder = new xml2js.Builder();
+          resp.status(201);
+          resp.send(builder.buildObject({result: true}));
+        }).catch((err) => {
+          // unable to insert data
+          console.log(err);
+          resp.status(500);
+          resp.send(buildXmlFormErrorSet([
+            {
+              name: 'account_type',
+              error: 'Failed to insert data, please try again later',
+            },
+          ]));
+        });
       } else {
         // the choice given was not valid
         resp.status(400);
@@ -574,24 +573,24 @@ app.post('/create-account', (req, resp) => {
  */
 app.post('/update-account', (req, resp) => {
   resp.set('Content-Type', 'text/xml'); // set response header for xml
-  if (areFormFieldsPresent(req.xml, ['account', 'action', 
+  if (areFormFieldsPresent(req.xml, ['account', 'action',
     'change', 'transferAccount']) && req.session.username) {
     let check = true; // true indicates checks on input passed
-    const account = req.xml.form.account[0];  // get all the values
+    const account = req.xml.form.account[0]; // get all the values
     const accountDest = req.xml.form.transferAccount[0];
     const action = req.xml.form.action[0];
     let change = req.xml.form.change[0];
-    const checkChange = validate.positiveNumber(change);  // validate amount
+    const checkChange = validate.positiveNumber(change); // validate amount
     if (!checkChange.result) {
       resp.status(400); // failed validation, send over errors
       resp.send(buildXmlFormErrorSet([
         {
           name: 'change',
           error: checkChange.reason,
-        }
+        },
       ]));
       check = false;
-    } else {  // check passed, get amount as a number
+    } else { // check passed, get amount as a number
       change = parseInt(change);
     }
     // verify that the selected action is a valid choice
@@ -601,7 +600,7 @@ app.post('/update-account', (req, resp) => {
         {
           name: 'action',
           error: 'Invalid action choice',
-        }
+        },
       ]));
       check = false;
     }
@@ -627,82 +626,82 @@ app.post('/update-account', (req, resp) => {
                 },
               ]));
             } else {
-              transfer = true;  // transer, so must change two accounts
+              transfer = true; // transer, so must change two accounts
               // verify that user owns the second account for the transfer
               // also verify that the transfer account is not the same
               if (accounts.some((val) => {
-                return accountDest === String(val.account_id)}) && 
-                accountDest !== account) {
-                  // get the account info for the transfer account
-                  db.getAccount(accountDest, 
+                return accountDest === String(val.account_id);
+              }) && accountDest !== account) {
+                // get the account info for the transfer account
+                db.getAccount(accountDest,
                     req.session.username).then((accDest) => {
-                      let accDestBalance = accDest.balance; // account balance
-                      // check that sufficient balance for transfer
-                      if (accountBal >= change) {
-                        accountBal -= change; // take from main account choice
-                        accDestBalance += change; // add to destination account
-                        // update both accounts
-                        db.updateAccount(account, accountBal).then(() => {
-                          db.updateAccount(accountDest, 
-                            accDestBalance).then(() => {
-                              // successfully updated both accounts, send resp
-                              const builder = new xml2js.Builder();
-                              resp.status(202);
-                              resp.send(builder.buildObject({result: true}));
-                            }).catch((err) => {
-                              // database error encountered
-                              console.log(err);
-                              resp.status(500);
-                              resp.send(buildXmlFormErrorSet([
-                                {
-                                  name: 'change',
-                                  error: 'Could update account balance',
-                                },
-                              ]));
-                            });
-                        }).catch((err) => {
-                          // database error encountered
-                          console.log(err);
-                          resp.status(500);
-                          resp.send(buildXmlFormErrorSet([
-                            {
-                              name: 'change',
-                              error: 'Could update account balance',
-                            },
-                          ]));
-                        });
-                      } else {
-                        // not enough money in account for transfer
-                        resp.status(400);
+                  let accDestBalance = accDest.balance; // account balance
+                  // check that sufficient balance for transfer
+                  if (accountBal >= change) {
+                    accountBal -= change; // take from main account choice
+                    accDestBalance += change; // add to destination account
+                    // update both accounts
+                    db.updateAccount(account, accountBal).then(() => {
+                      db.updateAccount(accountDest,
+                          accDestBalance).then(() => {
+                        // successfully updated both accounts, send resp
+                        const builder = new xml2js.Builder();
+                        resp.status(202);
+                        resp.send(builder.buildObject({result: true}));
+                      }).catch((err) => {
+                        // database error encountered
+                        console.log(err);
+                        resp.status(500);
                         resp.send(buildXmlFormErrorSet([
                           {
                             name: 'change',
-                            error: 'Balance insuffient for transfer',
+                            error: 'Could update account balance',
                           },
                         ]));
-                      }
-                  }).catch((err) => {
-                    // failed to verify account info
-                    console.log(err);
-                    resp.status(500);
+                      });
+                    }).catch((err) => {
+                      // database error encountered
+                      console.log(err);
+                      resp.status(500);
+                      resp.send(buildXmlFormErrorSet([
+                        {
+                          name: 'change',
+                          error: 'Could update account balance',
+                        },
+                      ]));
+                    });
+                  } else {
+                    // not enough money in account for transfer
+                    resp.status(400);
                     resp.send(buildXmlFormErrorSet([
                       {
-                        name: 'transferAccount',
-                        error: 'Could not confirm account',
+                        name: 'change',
+                        error: 'Balance insuffient for transfer',
                       },
                     ]));
-                  });
-                } else {
-                  // failed to verify account info for transfer
-                  resp.status(400);
+                  }
+                }).catch((err) => {
+                  // failed to verify account info
+                  console.log(err);
+                  resp.status(500);
                   resp.send(buildXmlFormErrorSet([
                     {
                       name: 'transferAccount',
-                      error: 'Could not confirm account '
-                             + '(ensure that account choices are different)',
+                      error: 'Could not confirm account',
                     },
                   ]));
-                }
+                });
+              } else {
+                // failed to verify account info for transfer
+                resp.status(400);
+                resp.send(buildXmlFormErrorSet([
+                  {
+                    name: 'transferAccount',
+                    error: 'Could not confirm account '
+                             + '(ensure that account choices are different)',
+                  },
+                ]));
+              }
             }
             if (!transfer) {
               // not a transfer, so just update the main account choice

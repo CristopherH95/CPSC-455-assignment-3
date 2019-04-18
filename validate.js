@@ -231,12 +231,12 @@ let validate = {
       }
     } else {
       if (!/^[1-9][0-9]+$/.test(inputStr)) {
-        return {result: false, reason: 'Positive numbers only'}
+        return {result: false, reason: 'Positive numbers only'};
       } else {
         return {result: true, reason: ''};
       }
     }
-  }
+  },
 };
 // freeze validate object so it cannot be altered
 validate = Object.freeze(validate);

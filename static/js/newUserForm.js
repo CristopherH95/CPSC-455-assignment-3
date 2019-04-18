@@ -28,9 +28,10 @@ function checkPassword() {
   } else {
     addFeedback('pass-length', true);
   }
-  if (!passVal.split('').some(function(char) { 
-    return special.includes(char) })) {
-      addFeedback('pass-char', false);
+  if (!passVal.split('').some(function(char) {
+    return special.includes(char);
+  })) {
+    addFeedback('pass-char', false);
   } else {
     addFeedback('pass-char', true);
   }
