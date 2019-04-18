@@ -1,6 +1,20 @@
 # CPSC-455-assignment-2
 Simulated banking web app for CPSC-455 Web Security
 
+To setup this app, navigate to the top level directory which contains the "package.json" file and run:
+```
+npm install
+```
+After finishing this, run:
+```
+npm start
+```
+or
+```
+node app.js
+```
+to launch the server. The server will then listen on port 3000 for connections.
+
 ## Application Design
 
 ### User Data
