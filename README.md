@@ -1,6 +1,8 @@
 # CPSC-455-assignment-2
 Simulated banking web app for CPSC-455 Web Security
 
+Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
+
 To setup this app, navigate to the top level directory which contains the "package.json" file and run:
 ```
 npm install
