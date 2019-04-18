@@ -5,15 +5,7 @@ To setup this app, navigate to the top level directory which contains the "packa
 ```
 npm install
 ```
-After finishing this, run:
-```
-npm start
-```
-or
-```
-node app.js
-```
-to launch the server. The server will then listen on port 3000 for connections.
+After finishing this, run ```npm start``` or ```node app.js``` to launch the server. The server will then listen on port 3000 for connections.
 
 ## Application Design
 
