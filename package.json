@@ -2,6 +2,7 @@
   "name": "cpsc-455-assignment-2",
   "version": "1.0.0",
   "description": "Secure banking web app for CPSC-455 Web Security",
+  "repository": {"url": "https://github.com/CristopherH95/CPSC-455-assignment-2"},
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
