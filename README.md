@@ -2,6 +2,8 @@
 Simulated banking web app for CPSC-455 Web Security
 
 Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
+
+
 Note: this web app is only compatible with newer browsers due to use of some ES6 language features.
 
 To setup this app, navigate to the top level directory which contains the "package.json" file and run:
