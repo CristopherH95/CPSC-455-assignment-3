@@ -4,6 +4,7 @@ const fs = require('fs');
 const sqlite3 = require('sqlite3');
 const dbPath = './data/database.sqlite3';
 const dbSetupFile = './data/model.sql';
+let dbConnect = null;
 
 if (!fs.existsSync(dbPath)) {
   dbConnect = new sqlite3.Database(dbPath, (err) => {
