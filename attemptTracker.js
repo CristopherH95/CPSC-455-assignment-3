@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Tracker class for keeping track of login attempts
  */

@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * collection of methods for validating data,
  * each returns an object where 'result' is true/false

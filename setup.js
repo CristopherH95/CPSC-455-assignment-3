@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const sqlite3 = require('sqlite3');
 const dbPath = './data/database.sqlite3';
