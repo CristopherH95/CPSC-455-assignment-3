@@ -1,20 +1,20 @@
-CREATE TABLE bank_users ( 
-    user_id TEXT PRIMARY KEY, 
-    pass TEXT NOT NULL, 
-    first_name TEXT NOT NULL, 
-    last_name TEXT NOT NULL, 
-    street TEXT NOT NULL, 
-    city TEXT NOT NULL, 
-    country_state TEXT NOT NULL, 
-    country TEXT NOT NULL 
+CREATE TABLE IF NOT EXISTS bank_users ( 
+    user_id VARCHAR(35) PRIMARY KEY, 
+    pass VARCHAR(255) NOT NULL, 
+    first_name VARCHAR(50) NOT NULL, 
+    last_name VARCHAR(50) NOT NULL, 
+    street VARCHAR(100) NOT NULL, 
+    city VARCHAR(60) NOT NULL, 
+    country_state VARCHAR(55) NOT NULL, 
+    country VARCHAR(55) NOT NULL 
 );
-CREATE TABLE bank_account_types ( account_type TEXT PRIMARY KEY );
-INSERT INTO bank_account_types (account_type) VALUES ('Checking'), ('Savings');
-CREATE TABLE bank_user_accounts ( 
-    account_id INTEGER PRIMARY KEY NOT NULL, 
-    bank_user_id TEXT NOT NULL, 
-    account_type TEXT NOT NULL, 
-    balance INTEGER, 
-        FOREIGN KEY(bank_user_id) REFERENCES bank_users(user_id), 
-        FOREIGN KEY(account_type) REFERENCES bank_account_types(account_type) 
+CREATE TABLE IF NOT EXISTS bank_account_types ( account_type VARCHAR(25) PRIMARY KEY );
+INSERT IGNORE INTO bank_account_types (account_type) VALUES ('Checking'), ('Savings');
+CREATE TABLE IF NOT EXISTS bank_user_accounts ( 
+    account_id INT AUTO_INCREMENT PRIMARY KEY, 
+    bank_user_id VARCHAR(35) NOT NULL, 
+    account_type VARCHAR(25) NOT NULL, 
+    balance DECIMAL(25, 2) DEFAULT 0.00, 
+        FOREIGN KEY(bank_user_id) REFERENCES bank_users(user_id) ON DELETE CASCADE, 
+        FOREIGN KEY(account_type) REFERENCES bank_account_types(account_type) ON DELETE CASCADE 
 );

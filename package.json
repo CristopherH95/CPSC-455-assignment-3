@@ -1,11 +1,14 @@
 {
-  "name": "cpsc-455-assignment-2",
-  "version": "1.0.0",
+  "name": "cpsc-455-assignment-3",
+  "version": "2.0.0",
   "description": "Secure banking web app for CPSC-455 Web Security",
-  "repository": {"url": "https://github.com/CristopherH95/CPSC-455-assignment-2"},
+  "repository": {
+    "url": "https://github.com/CristopherH95/CPSC-455-assignment-3"
+  },
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "node prepare.js",
     "postinstall": "node setup.js",
     "start": "node app.js"
   },
@@ -26,7 +29,7 @@
     "client-sessions": "^0.8.0",
     "express": "^4.16.4",
     "helmet": "^3.16.0",
-    "sqlite3": "^4.0.6",
+    "mysql": "^2.17.1",
     "xml2js": "^0.4.19",
     "xss-filters": "^1.2.7"
   },

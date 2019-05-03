@@ -594,7 +594,7 @@ app.post('/update-account', (req, resp) => {
     const accountDest = req.xml.form.transferAccount[0];
     const action = req.xml.form.action[0];
     let change = req.xml.form.change[0];
-    const checkChange = validate.positiveNumber(change); // validate amount
+    const checkChange = validate.Decimal(change); // validate amount
     if (!checkChange.result) {
       resp.status(400); // failed validation, send over errors
       resp.send(buildXmlFormErrorSet([
@@ -605,7 +605,7 @@ app.post('/update-account', (req, resp) => {
       ]));
       check = false;
     } else { // check passed, get amount as a number
-      change = parseInt(change);
+      change = parseFloat(change);
     }
     // verify that the selected action is a valid choice
     if (!['deposit', 'withdraw', 'transfer'].includes(action)) {

@@ -1,37 +1,37 @@
 'use strict';
 
 const fs = require('fs');
-const sqlite3 = require('sqlite3');
-const dbPath = './data/database.sqlite3';
+const mysql = require('mysql');
 const dbSetupFile = './data/model.sql';
-let dbConnect = null;
+const dbConfig = JSON.parse(fs.readFileSync('./dbConfig.json', {encoding: 'utf8'}));
+if (!dbConfig || !dbConfig.host || !dbConfig.user || !dbConfig.password || !dbConfig.database) {
+  throw new Error('Failed to get database configuration.');
+}
+const connection = mysql.createConnection({
+  host: dbConfig.host,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  multipleStatements: true, // allow multiple so setup can run all at once
+});
 
-if (!fs.existsSync(dbPath)) {
-  dbConnect = new sqlite3.Database(dbPath, (err) => {
+connection.connect((err) => {
+  if (err) {
+    throw err;
+  }
+  console.log('Connected to database...');
+  const dbSetupQueries = ds.readFileSync(dbSetupFile, {encoding: 'utf8'});
+  console.log('Running setup queries:');
+  console.log(dbSetupQueries);
+  connection.query(dbSetupQueries, (err) => {
     if (err) {
       throw err;
     }
-    console.log('Setting up database...');
-    const setupQueries = fs.readFileSync(dbSetupFile, 'utf8');
-    console.log('Initial database setup queries:');
-    console.log(setupQueries);
-    dbConnect.serialize(() => {
-      // run each query for initial setup
-      // the error handler will attempt to delete
-      // the half complete database file if something goes wrong
-      dbConnect.exec(setupQueries, (err) => {
-        if (err) {
-          fs.unlink(dbPath, (fErr) => {
-            console.error('Failed to run query in initial setup, '
-                        + 'removing incomplete database file.');
-            if (fErr) {
-              throw fErr;
-            }
-          });
-          throw err;
-        }
-      });
+    console.log('Database setup complete.');
+    connection.end((err) => {
+      if (err) {
+        throw err;
+      }
     });
-    console.log('Finished database setup');
   });
-}
+});

@@ -1,14 +1,19 @@
 'use strict';
 
-const sqlite3 = require('sqlite3');
+const fs = require('fs');
+const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const dbPath = './data/database.sqlite3';
+const dbConfig = JSON.parse(fs.readFileSync('./dbConfig.json', {encoding: 'utf8'}));
+if (!dbConfig || !dbConfig.host || !dbConfig.user || !dbConfig.password || !dbConfig.database) {
+  throw new Error('Failed to get database configuration.');
+}
 
-const dbConnect = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    throw err;
-  }
+const dbConnect = mysql.createConnection({
+  host: dbConfig.host,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
 });
 
 /**
@@ -40,65 +45,53 @@ let db = Object.defineProperties(
         enumerable: true,
       },
       getUserQuery: {
-        value: dbConnect.prepare('SELECT user_id, first_name, last_name, '
-                                 + 'street, city, country_state, country'
-                                 + ' FROM bank_users WHERE user_id=?'),
+        value: 'SELECT user_id, first_name, last_name, '
+               + 'street, city, country_state, country'
+               + ' FROM bank_users WHERE user_id=?',
       },
       getUserPassQuery: {
-        value: dbConnect.prepare('SELECT pass FROM bank_users WHERE user_id=?'),
+        value: 'SELECT pass FROM bank_users WHERE user_id=?',
       },
       getAllAccountsQuery: {
-        value: dbConnect.prepare('SELECT account_id FROM bank_user_accounts'
-                                 + ' WHERE bank_user_id=?'),
+        value: 'SELECT account_id FROM bank_user_accounts'
+               + ' WHERE bank_user_id=?',
       },
       getAccountCountQuery: {
-        value: dbConnect.prepare('SELECT COUNT(*) FROM bank_user_accounts '
-                                 + 'WHERE bank_user_id=?'),
+        value: 'SELECT COUNT(*) FROM bank_user_accounts '
+               + 'WHERE bank_user_id=?',
       },
       getAccountQuery: {
-        value: dbConnect.prepare('SELECT account_id, bank_user_id, '
-                                 + 'account_type, balance FROM '
-                                 + 'bank_user_accounts WHERE account_id=?'
-                                 + ' AND bank_user_id=?'),
+        value: 'SELECT account_id, bank_user_id, '
+               + 'account_type, balance FROM '
+               + 'bank_user_accounts WHERE account_id=?'
+               + ' AND bank_user_id=?',
       },
       getAccountTypesQuery: {
-        value: dbConnect.prepare('SELECT account_type FROM bank_account_types'),
+        value: 'SELECT account_type FROM bank_account_types',
       },
       insertUserQuery: {
-        value: dbConnect.prepare('INSERT INTO bank_users VALUES '
-                                 + '(?,?,?,?,?,?,?,?)'),
+        value: 'INSERT INTO bank_users VALUES (?,?,?,?,?,?,?,?)',
       },
       insertAccountQuery: {
-        value: dbConnect.prepare('INSERT INTO bank_user_accounts VALUES '
-                                 + '(NULL,?,?,?)'),
+        value: 'INSERT INTO bank_user_accounts VALUES (?,?,?)',
       },
       updateAccountQuery: {
-        value: dbConnect.prepare('UPDATE bank_user_accounts SET '
-                                 + 'balance=? WHERE account_id=?'),
+        value: 'UPDATE bank_user_accounts SET balance=? WHERE account_id=?',
       },
       close: {
         value: function(callback) {
-          // Finalize all prepared statements
-          this.getUserQuery.finalize();
-          this.getUserPassQuery.finalize();
-          this.getAllAccountsQuery.finalize();
-          this.getAccountQuery.finalize();
-          this.getAccountCountQuery.finalize();
-          this.getAccountTypesQuery.finalize();
-          this.insertUserQuery.finalize();
-          this.insertAccountQuery.finalize();
-          this.updateAccountQuery.finalize();
           // Close database connection
-          this.connection.close(callback);
+          this.connection.end(callback);
         },
       },
       getUser: {
         value: function(userId) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getUserQuery = this.getUserQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getUserQuery.get(userId, (err, row) => {
+            const runner = connect.query(getUserQuery, [userId], (err, row) => {
               // run query to get user and get row
               if (err) {
                 reject(err); // failed, reject promise
@@ -106,6 +99,8 @@ let db = Object.defineProperties(
                 resolve(row); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -113,10 +108,11 @@ let db = Object.defineProperties(
       getUserAccounts: {
         value: function(userId) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getAllAccountsQuery = this.getAllAccountsQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getAllAccountsQuery.all(userId, (err, rows) => {
+            const runner = connect.query(getAllAccountsQuery, [userId], (err, rows) => {
               // run query to get all of a user's accounts
               if (err) {
                 reject(err); // failed, reject promise
@@ -124,6 +120,8 @@ let db = Object.defineProperties(
                 resolve(rows); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -131,10 +129,11 @@ let db = Object.defineProperties(
       getAccountCount: {
         value: function(userId) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getAccountCountQuery = this.getAccountCountQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getAccountCountQuery.get(userId, (err, res) => {
+            const runner = connect.query(getAccountCountQuery, [userId], (err, res) => {
               // run query to get a count of user's accounts
               if (err) {
                 reject(err); // failed, reject promise
@@ -142,6 +141,8 @@ let db = Object.defineProperties(
                 resolve(res['COUNT(*)']); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -149,10 +150,11 @@ let db = Object.defineProperties(
       getAccount: {
         value: function(accountId, userId) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getAccountQuery = this.getAccountQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getAccountQuery.get(accountId, userId, (err, row) => {
+            const runner = connect.query(getAccountQuery, [accountId, userId], (err, row) => {
               // run query to get a specific account
               if (err) {
                 reject(err); // failed, reject promise
@@ -160,6 +162,8 @@ let db = Object.defineProperties(
                 resolve(row); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -167,17 +171,18 @@ let db = Object.defineProperties(
       insertUser: {
         value: function(userObj) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const insertQuery = this.insertUserQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
             bcrypt.hash(userObj.password, saltRounds, (hErr, hash) => {
               // hash the user password
               if (hErr) {
                 reject(hErr); // failed to hash, reject promise
               } else {
-                insertQuery.run(userObj.user_id, hash, userObj.first_name,
+                const runner = connect.query(insertQuery, [userObj.user_id, hash, userObj.first_name,
                     userObj.last_name, userObj.street, userObj.city,
-                    userObj.country_state, userObj.country, (err) => {
+                    userObj.country_state, userObj.country], (err) => {
                       // run insert query with parameters from user object
                       if (err) {
                         reject(err); // failed to insert, reject promise
@@ -185,6 +190,8 @@ let db = Object.defineProperties(
                         resolve(true); // success, resolve promise
                       }
                     });
+                    console.log('QUERY');
+                    console.log(runner.sql);
               }
             });
           });
@@ -194,12 +201,13 @@ let db = Object.defineProperties(
       insertAccount: {
         value: function(accountObj) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const insertAccountQuery = this.insertAccountQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            insertAccountQuery.run(accountObj.bank_user_id,
+            const runner = connect.query(insertAccountQuery, [accountObj.bank_user_id,
                 accountObj.account_type,
-                accountObj.balance, (err) => {
+                accountObj.balance], (err) => {
                   // run query to insert account
                   if (err) {
                     reject(err); // failed, reject promise
@@ -207,6 +215,8 @@ let db = Object.defineProperties(
                     resolve(true); // success, resolve with result
                   }
                 });
+                console.log('QUERY');
+                console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -214,10 +224,11 @@ let db = Object.defineProperties(
       updateAccount: {
         value: function(accountId, newBalance) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const updateAccountQuery = this.updateAccountQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            updateAccountQuery.run(newBalance, accountId, (err) => {
+            const runner = connect.query(updateAccountQuery, [newBalance, accountId], (err) => {
               // run query to update account
               if (err) {
                 reject(err); // failed, reject promise
@@ -225,6 +236,8 @@ let db = Object.defineProperties(
                 resolve(true); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -232,10 +245,11 @@ let db = Object.defineProperties(
       getAccountTypes: {
         value: function() {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getAccountTypesQuery = this.getAccountTypesQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getAccountTypesQuery.all((err, rows) => {
+            const runner = connect.query(getAccountTypesQuery, (err, rows) => {
               // run query to get all possible account types
               if (err) {
                 reject(err); // failed, reject promise
@@ -243,6 +257,8 @@ let db = Object.defineProperties(
                 resolve(rows); // success, resolve with result
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -250,10 +266,11 @@ let db = Object.defineProperties(
       validateUser: {
         value: function(userId, password) {
           // the context of 'this' may change,
-          // so get a reference to the query here
+          // so get references here
           const getUserPassQuery = this.getUserPassQuery;
+          const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            getUserPassQuery.get(userId, (err, row) => {
+            const runner = connect.query(getUserPassQuery, [userId], (err, row) => {
               // run query to get the user's hashed password
               if (err) {
                 reject(err); // failed, reject promise
@@ -269,6 +286,8 @@ let db = Object.defineProperties(
                 }
               }
             });
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
       },
