@@ -73,7 +73,7 @@ let db = Object.defineProperties(
         value: 'INSERT INTO bank_users VALUES (?,?,?,?,?,?,?,?)',
       },
       insertAccountQuery: {
-        value: 'INSERT INTO bank_user_accounts VALUES (?,?,?)',
+        value: 'INSERT INTO bank_user_accounts (bank_user_id, account_type, balance) VALUES (?,?,?)',
       },
       updateAccountQuery: {
         value: 'UPDATE bank_user_accounts SET balance=? WHERE account_id=?',
@@ -96,7 +96,7 @@ let db = Object.defineProperties(
               if (err) {
                 reject(err); // failed, reject promise
               } else {
-                resolve(row); // success, resolve with result
+                resolve(row.shift()); // success, resolve with result
               }
             });
             console.log('QUERY');
@@ -138,7 +138,7 @@ let db = Object.defineProperties(
               if (err) {
                 reject(err); // failed, reject promise
               } else {
-                resolve(res['COUNT(*)']); // success, resolve with result
+                resolve(res.shift()['COUNT(*)']); // success, resolve with result
               }
             });
             console.log('QUERY');
@@ -159,7 +159,7 @@ let db = Object.defineProperties(
               if (err) {
                 reject(err); // failed, reject promise
               } else {
-                resolve(row); // success, resolve with result
+                resolve(row.shift()); // success, resolve with result
               }
             });
             console.log('QUERY');
@@ -275,8 +275,9 @@ let db = Object.defineProperties(
               if (err) {
                 reject(err); // failed, reject promise
               } else {
-                if (row) {
-                  bcrypt.compare(password, row.pass).then((res) => {
+                const user = row.shift();
+                if (user) {
+                  bcrypt.compare(password, user.pass).then((res) => {
                     // compare password hash
                     resolve(res); // resolve promise with result of comparison
                   });

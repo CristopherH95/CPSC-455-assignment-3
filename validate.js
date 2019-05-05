@@ -226,7 +226,7 @@ let validate = {
     if (!inputStr) {
       return {result: false, reason: 'No values provided'};
     } else {
-      if (!/^\d+\.\d{2}$/.test(inputStr)) {
+      if (!/^(\d+\.\d{2})|(\d+\.\d)|(\d+)$/.test(inputStr)) {
         return {result: false, reason: 'Decimal values of two places only'};
       } else {
         return {result: true, reason: ''};

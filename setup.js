@@ -20,7 +20,7 @@ connection.connect((err) => {
     throw err;
   }
   console.log('Connected to database...');
-  const dbSetupQueries = ds.readFileSync(dbSetupFile, {encoding: 'utf8'});
+  const dbSetupQueries = fs.readFileSync(dbSetupFile, {encoding: 'utf8'});
   console.log('Running setup queries:');
   console.log(dbSetupQueries);
   connection.query(dbSetupQueries, (err) => {

@@ -218,7 +218,7 @@ window.addEventListener('load', function(ev) {
           errEl.textContent = 'Accounts must not be the same';
           valid = false; // invalid
         }
-        const numberCheck = validate.positiveNumber(changeValue);
+        const numberCheck = validate.decimalNumber(changeValue);
         if (!numberCheck.result) {
           // the change value must be a number, nothing else is allowed
           const errEl = xmlFormHandler.getOrCreateElement('#change-error',

@@ -7,10 +7,10 @@ const rl = readline.createInterface({
     output: process.stdout,
 });
 
-rl.question('MySQL host: [localhost]', (accHost) => {
-    rl.question('Database name: [banking_web_app]', (dbName) => {
-        rl.question('MySQL database account name for app:', (accName) => {
-            rl.question('Password for MySQL account:', (accPass) => {
+rl.question('MySQL host: [localhost] ', (accHost) => {
+    rl.question('Database name: [banking_web_app] ', (dbName) => {
+        rl.question('MySQL database account name for app: ', (accName) => {
+            rl.question('Password for MySQL account: ', (accPass) => {
                 const connect_data = {
                     host: accHost || 'localhost',
                     user: accName,
