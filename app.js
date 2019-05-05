@@ -185,6 +185,18 @@ app.post('/login', (req, resp) => {
     resp.send(xmlResp);
     check = false; // skip any checks
   }
+  if (check) {
+    const testUser = validate.userNameNoDb(userName);
+    const testPass = validate.password(password);
+    if (!testUser.result || !testPass.result) {
+      const xmlResp = buildXmlFormErrorSet([{
+        name: 'password', error: 'Invalid password/username',
+      }]);
+      resp.status(401);
+      resp.send(xmlResp);
+      check = false;
+    }
+  }
   if (check && attempts[userName]) {
     check = !attempts[userName].isLocked();
     locked = !check;
