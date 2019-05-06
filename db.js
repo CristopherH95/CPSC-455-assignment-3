@@ -4,8 +4,11 @@ const fs = require('fs');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const dbConfig = JSON.parse(fs.readFileSync('./dbConfig.json', {encoding: 'utf8'}));
-if (!dbConfig || !dbConfig.host || !dbConfig.user || !dbConfig.password || !dbConfig.database) {
+const dbConfig = JSON.parse(
+    fs.readFileSync('./dbConfig.json', {encoding: 'utf8'})
+);
+if (!dbConfig || !dbConfig.host || !dbConfig.user
+    || !dbConfig.password || !dbConfig.database) {
   throw new Error('Failed to get database configuration.');
 }
 
@@ -73,7 +76,8 @@ let db = Object.defineProperties(
         value: 'INSERT INTO bank_users VALUES (?,?,?,?,?,?,?,?)',
       },
       insertAccountQuery: {
-        value: 'INSERT INTO bank_user_accounts (bank_user_id, account_type, balance) VALUES (?,?,?)',
+        value: 'INSERT INTO bank_user_accounts (bank_user_id, '
+               + 'account_type, balance) VALUES (?,?,?)',
       },
       updateAccountQuery: {
         value: 'UPDATE bank_user_accounts SET balance=? WHERE account_id=?',
@@ -112,14 +116,15 @@ let db = Object.defineProperties(
           const getAllAccountsQuery = this.getAllAccountsQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(getAllAccountsQuery, [userId], (err, rows) => {
-              // run query to get all of a user's accounts
-              if (err) {
-                reject(err); // failed, reject promise
-              } else {
-                resolve(rows); // success, resolve with result
-              }
-            });
+            const runner = connect.query(getAllAccountsQuery,
+                [userId], (err, rows) => {
+                  // run query to get all of a user's accounts
+                  if (err) {
+                    reject(err); // failed, reject promise
+                  } else {
+                    resolve(rows); // success, resolve with result
+                  }
+                });
             console.log('QUERY');
             console.log(runner.sql);
           });
@@ -133,14 +138,16 @@ let db = Object.defineProperties(
           const getAccountCountQuery = this.getAccountCountQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(getAccountCountQuery, [userId], (err, res) => {
-              // run query to get a count of user's accounts
-              if (err) {
-                reject(err); // failed, reject promise
-              } else {
-                resolve(res.shift()['COUNT(*)']); // success, resolve with result
-              }
-            });
+            const runner = connect.query(getAccountCountQuery,
+                [userId], (err, res) => {
+                  // run query to get a count of user's accounts
+                  if (err) {
+                    reject(err); // failed, reject promise
+                  } else {
+                    // success, resolve with result
+                    resolve(res.shift()['COUNT(*)']);
+                  }
+                });
             console.log('QUERY');
             console.log(runner.sql);
           });
@@ -154,14 +161,15 @@ let db = Object.defineProperties(
           const getAccountQuery = this.getAccountQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(getAccountQuery, [accountId, userId], (err, row) => {
-              // run query to get a specific account
-              if (err) {
-                reject(err); // failed, reject promise
-              } else {
-                resolve(row.shift()); // success, resolve with result
-              }
-            });
+            const runner = connect.query(getAccountQuery,
+                [accountId, userId], (err, row) => {
+                  // run query to get a specific account
+                  if (err) {
+                    reject(err); // failed, reject promise
+                  } else {
+                    resolve(row.shift()); // success, resolve with result
+                  }
+                });
             console.log('QUERY');
             console.log(runner.sql);
           });
@@ -180,18 +188,19 @@ let db = Object.defineProperties(
               if (hErr) {
                 reject(hErr); // failed to hash, reject promise
               } else {
-                const runner = connect.query(insertQuery, [userObj.user_id, hash, userObj.first_name,
-                    userObj.last_name, userObj.street, userObj.city,
-                    userObj.country_state, userObj.country], (err) => {
-                      // run insert query with parameters from user object
-                      if (err) {
-                        reject(err); // failed to insert, reject promise
-                      } else {
-                        resolve(true); // success, resolve promise
-                      }
-                    });
-                    console.log('QUERY');
-                    console.log(runner.sql);
+                const runner = connect.query(insertQuery, [userObj.user_id,
+                  hash, userObj.first_name,
+                  userObj.last_name, userObj.street, userObj.city,
+                  userObj.country_state, userObj.country], (err) => {
+                  // run insert query with parameters from user object
+                  if (err) {
+                    reject(err); // failed to insert, reject promise
+                  } else {
+                    resolve(true); // success, resolve promise
+                  }
+                });
+                console.log('QUERY');
+                console.log(runner.sql);
               }
             });
           });
@@ -205,9 +214,10 @@ let db = Object.defineProperties(
           const insertAccountQuery = this.insertAccountQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(insertAccountQuery, [accountObj.bank_user_id,
-                accountObj.account_type,
-                accountObj.balance], (err) => {
+            const runner = connect.query(insertAccountQuery,
+                [accountObj.bank_user_id,
+                  accountObj.account_type,
+                  accountObj.balance], (err) => {
                   // run query to insert account
                   if (err) {
                     reject(err); // failed, reject promise
@@ -215,8 +225,8 @@ let db = Object.defineProperties(
                     resolve(true); // success, resolve with result
                   }
                 });
-                console.log('QUERY');
-                console.log(runner.sql);
+            console.log('QUERY');
+            console.log(runner.sql);
           });
         },
         enumerable: true,
@@ -228,14 +238,15 @@ let db = Object.defineProperties(
           const updateAccountQuery = this.updateAccountQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(updateAccountQuery, [newBalance, accountId], (err) => {
-              // run query to update account
-              if (err) {
-                reject(err); // failed, reject promise
-              } else {
-                resolve(true); // success, resolve with result
-              }
-            });
+            const runner = connect.query(updateAccountQuery,
+                [newBalance, accountId], (err) => {
+                  // run query to update account
+                  if (err) {
+                    reject(err); // failed, reject promise
+                  } else {
+                    resolve(true); // success, resolve with result
+                  }
+                });
             console.log('QUERY');
             console.log(runner.sql);
           });
@@ -270,23 +281,24 @@ let db = Object.defineProperties(
           const getUserPassQuery = this.getUserPassQuery;
           const connect = this.connection;
           return new Promise(function(resolve, reject) {
-            const runner = connect.query(getUserPassQuery, [userId], (err, row) => {
-              // run query to get the user's hashed password
-              if (err) {
-                reject(err); // failed, reject promise
-              } else {
-                const user = row.shift();
-                if (user) {
-                  bcrypt.compare(password, user.pass).then((res) => {
-                    // compare password hash
-                    resolve(res); // resolve promise with result of comparison
-                  });
-                } else {
-                  // couldn't find any info, the user may not exist
-                  resolve(false);
-                }
-              }
-            });
+            const runner = connect.query(getUserPassQuery,
+                [userId], (err, row) => {
+                  // run query to get the user's hashed password
+                  if (err) {
+                    reject(err); // failed, reject promise
+                  } else {
+                    const user = row.shift();
+                    if (user) {
+                      bcrypt.compare(password, user.pass).then((res) => {
+                        // compare password hash
+                        resolve(res); // resolve promise with result
+                      });
+                    } else {
+                      // couldn't find any info, the user may not exist
+                      resolve(false);
+                    }
+                  }
+                });
             console.log('QUERY');
             console.log(runner.sql);
           });

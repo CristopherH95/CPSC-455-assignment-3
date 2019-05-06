@@ -1,6 +1,8 @@
 'use strict';
 
 const express = require('express');
+const https = require('https');
+const fs = require('fs');
 const db = require('./db');
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -10,6 +12,12 @@ const validate = require('./validate');
 const xml2js = require('xml2js');
 const xssFilters = require('xss-filters');
 const Tracker = require('./attemptTracker');
+const httpsConfig = JSON.parse(
+    fs.readFileSync('./httpsConfig.json', {encoding: 'utf8'})
+);
+if (!httpsConfig.key || !httpsConfig.cert) {
+  throw new Error('Failed to get https configuration');
+}
 
 const app = express();
 const unprotectedPaths = ['/', '/login', '/new-user', '/create-user'];
@@ -606,7 +614,7 @@ app.post('/update-account', (req, resp) => {
     const accountDest = req.xml.form.transferAccount[0];
     const action = req.xml.form.action[0];
     let change = req.xml.form.change[0];
-    const checkChange = validate.Decimal(change); // validate amount
+    const checkChange = validate.decimal(change); // validate amount
     if (!checkChange.result) {
       resp.status(400); // failed validation, send over errors
       resp.send(buildXmlFormErrorSet([
@@ -812,8 +820,12 @@ app.get('/logout', (req, resp) => {
 
 // listen on port 3000,
 // output a log statement to show that the server should be up
+const server = https.createServer({
+  key: fs.readFileSync(httpsConfig.key),
+  cert: fs.readFileSync(httpsConfig.cert),
+}, app);
 console.log('Listening on port 3000');
-const server = app.listen(3000);
+server.listen(3000);
 
 // Handle termination signal, close database and server gracefully
 process.on('SIGINT', () => {

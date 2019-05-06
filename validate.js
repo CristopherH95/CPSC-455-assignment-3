@@ -221,7 +221,7 @@ let validate = {
     }
     return check;
   },
-  Decimal: function(input) {
+  decimal: function(input) {
     const inputStr = String(input);
     if (!inputStr) {
       return {result: false, reason: 'No values provided'};
