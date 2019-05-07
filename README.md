@@ -5,18 +5,65 @@ Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
 
 
 Note: this web app is only compatible with newer browsers due to use of some ES6 language features.
+Pre-requisites:
+    - MySQL
+    - OpenSSL (if generating certificate)
 
-To setup this app, navigate to the top level directory which contains the "package.json" file and run:
+To setup this app, first install MySQL in the most convenient method for your platform.
+A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/installing.html
+Once this is done, an account and a database must be created for this app. This can be done through a MySQL shell session.
+A user can then be created like so:
+
+```
+CREATE USER 'bank'@'localhost' IDENTIFIED BY 'bankpassword';
+```
+
+Newer versions of MySQL may require 'mysql_native_password' be used for the app to function properly:
+
+```
+CREATE USER 'bank'@'localhost' IDENTIFIED WITH mysql_native_password BY 'bankpassword';
+```
+
+A database can then created by using:
+
+```
+CREATE DATABASE banking_web_app;
+```
+
+Then, the previously created user can be given access to the database via:
+
+```
+GRANT ALL PRIVILEGES ON banking_web_app.* TO 'bank'@'localhost';
+```
+
+Finally, navigate to the directory containing this repository's package.json file and run the following:
+
 ```
 npm install
 ```
-After finishing this, run ```npm start``` or ```node app.js``` to launch the server. The server will then listen on port 3000 for connections.
+
+This will begin the install process, and the app will prompt you for the information it must use to access the database.
+At the end of the install process, the app will ask whether a certificate should be generated for testing.
+This uses OpenSSL, and so requires that it be installed and accessible from the command line.
+If a private key and certificate already exists, the path to both of these can optionally be specified instead.
+The app will be usable with the self-signed certificate, but it will need to be installed as a trusted certificate if browser warnings are to be avoided.
+
+After finishing, run ```npm start``` or ```node app.js``` to launch the server. The server will then listen on port 3000 for connections over the HTTPS protocol.
 
 ## Application Design
 
-This web app uses input validation, output sanitization, XSS headers, and CSP headers to protect against XSS attacks.
+This web app uses the built in features of the Node MySQL package are used to protect against SQL injection.
+For secure communications only HTTPS is used. Further, passwords are secured using bcrypt to hash and salt them.
+In addition, input validation, output sanitization, XSS headers, and CSP headers are used to protect against XSS attacks.
 For broken authentication protection, this web app locks accounts on repeated login attempts, requires strict constraints on
 passwords, and prevents access to data not associated with a logged in user.
+
+### SQL Injection Protection
+
+All user inputs are validated on both the front end and the back end to protect against malicious data.
+Unfortunately, the Node MySQL package does not have in-built support for prepared statements.
+Instead, the query string escaping is used to protect against SQL injection.
+While prepared statements would be the preferred approach, escaping in combination with validation provides protection.
 
 ### User Data
 
@@ -146,7 +193,7 @@ client-sessions -> session management
 xss-filters -> back-end sanitization
 helmet -> CSP specification
 body-parser -> accessing POST data
-sqlite3 -> database management
+mysql -> database management
 bcrypt -> password hashing
 xml2js -> back-end XML serialization/deserialization
 ```
