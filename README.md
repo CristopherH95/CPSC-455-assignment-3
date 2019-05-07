@@ -5,9 +5,13 @@ Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
 
 
 Note: this web app is only compatible with newer browsers due to use of some ES6 language features.
+
 Pre-requisites:
+
     - MySQL
+
     - OpenSSL (if generating certificate)
+    
 
 To setup this app, first install MySQL in the most convenient method for your platform.
 A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/installing.html
