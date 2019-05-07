@@ -41,9 +41,11 @@ function setupCert() {
           // use openssl to generate cert/key
           // TODO: fix openssl command
           // TODO: test using spawnSync instead of execSync
-          childProcess.execSync('openssl req -nodes -new -x509 '
-                                + '-keyout ./https_info/server.key '
-                                +'-out ./https_info/server.cert');
+          childProcess.spawnSync('openssl', ['req', '-nodes', '-new', '-x509',
+            '-keyout', './https_info/server.key',
+            '-out', './https_info/server.cert'], {
+            stdio: 'inherit', stdin: 'inherit',
+          });
           // write to config file
           fs.writeFileSync('httpsConfig.json', JSON.stringify({
             key: './https_info/server.key',

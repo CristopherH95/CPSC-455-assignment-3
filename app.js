@@ -20,7 +20,10 @@ if (!httpsConfig.key || !httpsConfig.cert) {
 }
 
 const app = express();
-const unprotectedPaths = ['/', '/login', '/new-user', '/create-user'];
+const unprotectedPaths = [
+  '/', '/login', '/new-user',
+  '/create-user', '/favicon.ico',
+];
 const attempts = {};
 
 // Set content security policy to allow content from self only
@@ -93,7 +96,7 @@ app.use((req, resp, next) => {
  */
 app.use((req, resp, next) => {
   if (!req.session.username && !/^\/static/.test(req.url)
-      && !unprotectedPaths.includes(req.url)) {
+      && !unprotectedPaths.includes(req.url.split('?')[0])) {
     console.log('unauthorized user, redirecting');
     resp.redirect('/');
   } else {
@@ -824,8 +827,9 @@ const server = https.createServer({
   key: fs.readFileSync(httpsConfig.key),
   cert: fs.readFileSync(httpsConfig.cert),
 }, app);
-console.log('Listening on port 3000');
-server.listen(3000);
+server.listen(3000, () => {
+  console.log('Listening on port 3000 (NOTE: all requests must be HTTPS)');
+});
 
 // Handle termination signal, close database and server gracefully
 process.on('SIGINT', () => {
