@@ -62,7 +62,7 @@ passwords, and prevents access to data not associated with a logged in user.
 
 All user inputs are validated on both the front end and the back end to protect against malicious data.
 Unfortunately, the Node MySQL package does not have in-built support for prepared statements.
-Instead, the query string escaping is used to protect against SQL injection.
+Instead, query string escaping is used to protect against SQL injection.
 While prepared statements would be the preferred approach, escaping in combination with validation provides protection.
 
 ### User Data
