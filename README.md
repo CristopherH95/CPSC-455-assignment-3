@@ -1,4 +1,4 @@
-# CPSC-455-assignment-2
+# CPSC-455-assignment-3
 Simulated banking web app for CPSC-455 Web Security
 
 Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
