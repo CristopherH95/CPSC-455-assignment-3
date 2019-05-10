@@ -649,7 +649,7 @@ app.post('/update-account', (req, resp) => {
         if (accounts.some((val) => account === String(val.account_id))) {
           // user owns the account, get the account's data
           db.getAccount(account, req.session.username).then((acc) => {
-            let accountBal = acc.balance; // account balance
+            let accountBal = parseFloat(acc.balance); // account balance
             if (action === 'deposit') {
               accountBal += change; // deposit, add to balance
             } else if (action === 'withdraw' && accountBal >= change) {
@@ -672,7 +672,7 @@ app.post('/update-account', (req, resp) => {
                 // get the account info for the transfer account
                 db.getAccount(accountDest,
                     req.session.username).then((accDest) => {
-                  let accDestBalance = accDest.balance; // account balance
+                  let accDestBalance = parseFloat(accDest.balance); // balance
                   // check that sufficient balance for transfer
                   if (accountBal >= change) {
                     accountBal -= change; // take from main account choice
@@ -692,7 +692,7 @@ app.post('/update-account', (req, resp) => {
                         resp.send(buildXmlFormErrorSet([
                           {
                             name: 'change',
-                            error: 'Could update account balance',
+                            error: 'Could not update account balance',
                           },
                         ]));
                       });
@@ -703,7 +703,7 @@ app.post('/update-account', (req, resp) => {
                       resp.send(buildXmlFormErrorSet([
                         {
                           name: 'change',
-                          error: 'Could update account balance',
+                          error: 'Could not update account balance',
                         },
                       ]));
                     });
@@ -826,6 +826,7 @@ app.get('/logout', (req, resp) => {
 const server = https.createServer({
   key: fs.readFileSync(httpsConfig.key),
   cert: fs.readFileSync(httpsConfig.cert),
+  passphrase: httpsConfig.passphrase,
 }, app);
 server.listen(3000, () => {
   console.log('Listening on port 3000 (NOTE: all requests must be HTTPS)');

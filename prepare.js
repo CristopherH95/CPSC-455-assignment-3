@@ -9,12 +9,12 @@ const rl = readline.createInterface({
 
 rl.question('MySQL host: [localhost] ', (accHost) => {
   rl.question('Database name: [banking_web_app] ', (dbName) => {
-    rl.question('MySQL database account name for app: ', (accName) => {
-      rl.question('Password for MySQL account: ', (accPass) => {
+    rl.question('MySQL database account name for app: [bank] ', (accName) => {
+      rl.question('Password for MySQL account: [bankpassword] ', (accPass) => {
         const connectData = {
           host: accHost || 'localhost',
-          user: accName,
-          password: accPass,
+          user: accName || 'bank',
+          password: accPass || 'bankpassword',
           database: dbName || 'banking_web_app',
         };
         fs.writeFileSync(configFile, JSON.stringify(connectData));

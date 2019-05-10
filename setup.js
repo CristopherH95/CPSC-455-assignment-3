@@ -3,7 +3,7 @@
 const childProcess = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
-const mysql = require('mysql');
+const mysql2 = require('mysql2');
 const dbSetupFile = './data/model.sql';
 const dbConfig = JSON.parse(
     fs.readFileSync('./dbConfig.json', {encoding: 'utf8'})
@@ -13,7 +13,7 @@ if (!dbConfig || !dbConfig.host || !dbConfig.user
     || !dbConfig.password || !dbConfig.database) {
   throw new Error('Failed to get database configuration.');
 }
-const connection = mysql.createConnection({
+const connection = mysql2.createConnection({
   host: dbConfig.host,
   user: dbConfig.user,
   password: dbConfig.password,
@@ -37,23 +37,27 @@ function setupCert() {
           if (!fs.existsSync('./https_info')) {
             fs.mkdirSync('./https_info');
           }
-          rl.close();
-          // use openssl to generate cert/key
-          // TODO: fix openssl command
-          // TODO: test using spawnSync instead of execSync
-          childProcess.spawnSync('openssl', ['req', '-nodes', '-new', '-x509',
-            '-keyout', './https_info/server.key',
-            '-out', './https_info/server.cert'], {
-            stdio: 'inherit', stdin: 'inherit',
-          });
-          // write to config file
-          fs.writeFileSync('httpsConfig.json', JSON.stringify({
-            key: './https_info/server.key',
-            cert: './https_info/server.cert',
-          }));
-          console.log('Generated https config file...');
+          console.log('Generating https config file.');
+          rl.question('Please enter pass phrase to use for the private key: ',
+              (passPhrase) => {
+                rl.close();
+                // use openssl to generate cert/key
+                childProcess.spawnSync('openssl', ['req', '-new', '-x509',
+                  '-passout', 'pass:' + passPhrase,
+                  '-keyout', './https_info/server.key',
+                  '-out', './https_info/server.cert'], {
+                  stdio: 'inherit', stdin: 'inherit',
+                });
+                // write to config file
+                fs.writeFileSync('httpsConfig.json', JSON.stringify({
+                  key: './https_info/server.key',
+                  cert: './https_info/server.cert',
+                  passphrase: passPhrase,
+                }));
+                console.log('Generated https config file...');
+              });
         } else {
-          // user already has cert/key, request their location
+          // user already has cert/key, request their location and info
           rl.question('Please enter the path '
                       +'to the private key for the server: ', (keyPath) => {
             if (!fs.existsSync(keyPath)) {
@@ -64,13 +68,18 @@ function setupCert() {
               if (!fs.existsSync(certPath)) {
                 throw new Error('Could not find key with given path!');
               }
-              // write locations to config file
-              fs.writeFileSync('httpsConfig.json', JSON.stringify({
-                key: keyPath,
-                cert: certPath,
-              }));
-              console.log('Generate https config file...');
-              rl.close();
+              rl.question('Please enter the pass phrase used for the key: ',
+                  (passPhrase) => {
+                    console.log('Generating https config file.');
+                    // write locations to config file
+                    fs.writeFileSync('httpsConfig.json', JSON.stringify({
+                      key: keyPath,
+                      cert: certPath,
+                      passphrase: passPhrase,
+                    }));
+                    console.log('Generated https config file...');
+                    rl.close();
+                  });
             });
           });
         }

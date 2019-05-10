@@ -8,7 +8,7 @@ Note: this web app is only compatible with newer browsers due to use of some ES6
 
 Pre-requisites:
 - MySQL
-- OpenSSL (if generating certificate)
+- OpenSSL
 
 To setup this app, first install MySQL in the most convenient method for your platform.
 A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/installing.html
