@@ -53,8 +53,8 @@ After finishing, run ```npm start``` or ```node app.js``` to launch the server. 
 
 ## Application Design
 
-This web app uses the built in features of the Node MySQL package are used to protect against SQL injection.
-For secure communications only HTTPS is used. Further, passwords are secured using bcrypt to hash and salt them.
+This web app uses the built in features of the Node mysql2 package to protect against SQL injection.
+For secure communications only HTTPS is used. Further, password storage is secured using bcrypt to hash and salt them.
 In addition, input validation, output sanitization, XSS headers, and CSP headers are used to protect against XSS attacks.
 For broken authentication protection, this web app locks accounts on repeated login attempts, requires strict constraints on
 passwords, and prevents access to data not associated with a logged in user.
@@ -62,9 +62,9 @@ passwords, and prevents access to data not associated with a logged in user.
 ### SQL Injection Protection
 
 All user inputs are validated on both the front end and the back end to protect against malicious data.
-Unfortunately, the Node MySQL package does not have in-built support for prepared statements.
-Instead, query string escaping is used to protect against SQL injection.
-While prepared statements would be the preferred approach, escaping in combination with validation provides protection.
+Additionally, the mysql2 package provides an API for prepared statements, which is used here.
+OWASP's recommendation is first to used prepared statements, which is why they are utilized here.
+As such, the application should be secured against SQL injection attempts.
 
 ### User Data
 
@@ -194,7 +194,7 @@ client-sessions -> session management
 xss-filters -> back-end sanitization
 helmet -> CSP specification
 body-parser -> accessing POST data
-mysql -> database management
+mysql2 -> database management
 bcrypt -> password hashing
 xml2js -> back-end XML serialization/deserialization
 ```
