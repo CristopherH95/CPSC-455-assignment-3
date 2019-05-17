@@ -7,7 +7,7 @@ Developed by Cristopher Hernandez, cristopherh@csu.fullerton.edu
 Note: this web app is only compatible with newer browsers due to use of some ES6 language features.
 
 Pre-requisites:
-- MySQL
+- MySQL (ver >= 5.7.6)
 - OpenSSL
 
 To setup this app, first install MySQL in the most convenient method for your platform.
