@@ -12,7 +12,7 @@ Pre-requisites:
 
 To setup this app, first install MySQL in the most convenient method for your platform.
 A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/installing.html
-Once this is done, the file "dbcreate.sql" contains statements to run for the apps default configuration.
+Once this is done, the file "createdb.sql" contains statements to run for the apps default configuration.
 This can be run by first opening a mysql shell with root privileges and running ```source createdb.sql```.
 
 Finally, navigate to the directory containing this repository's package.json file and run the following:
