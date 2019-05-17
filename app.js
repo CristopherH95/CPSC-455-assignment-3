@@ -13,7 +13,7 @@ const xml2js = require('xml2js');
 const xssFilters = require('xss-filters');
 const Tracker = require('./attemptTracker');
 const httpsConfig = JSON.parse(
-    fs.readFileSync('./httpsConfig.json', {encoding: 'utf8'})
+    fs.readFileSync('./config/httpsConfig.json', {encoding: 'utf8'})
 );
 if (!httpsConfig.key || !httpsConfig.cert) {
   throw new Error('Failed to get https configuration');

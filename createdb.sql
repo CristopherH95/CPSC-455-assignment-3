@@ -1,3 +1,11 @@
+CREATE DATABASE IF NOT EXISTS bank_web_app;
+
+CREATE USER IF NOT EXISTS 'bank'@'localhost' IDENTIFIED WITH mysql_native_password BY 'bankers4life!';
+
+GRANT ALL PRIVILEGES ON bank_web_app.* TO 'bank'@'localhost';
+
+USE bank_web_app;
+
 CREATE TABLE IF NOT EXISTS bank_users ( 
     user_id VARCHAR(35) PRIMARY KEY, 
     pass VARCHAR(255) NOT NULL, 

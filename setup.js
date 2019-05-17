@@ -3,23 +3,14 @@
 const childProcess = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
-const mysql2 = require('mysql2');
-const dbSetupFile = './data/model.sql';
-const dbConfig = JSON.parse(
-    fs.readFileSync('./dbConfig.json', {encoding: 'utf8'})
-);
 
-if (!dbConfig || !dbConfig.host || !dbConfig.user
-    || !dbConfig.password || !dbConfig.database) {
-  throw new Error('Failed to get database configuration.');
+if (!fs.existsSync('./config')) {
+  fs.mkdirSync('./config');
 }
-const connection = mysql2.createConnection({
-  host: dbConfig.host,
-  user: dbConfig.user,
-  password: dbConfig.password,
-  database: dbConfig.database,
-  multipleStatements: true, // allow multiple so setup can run all at once
-});
+
+if (!fs.existsSync('./https_info')) {
+  fs.mkdirSync('./https_info');
+}
 
 /**
  * Begins the guided setup process for the server private key and certificate
@@ -34,9 +25,6 @@ function setupCert() {
       (ans) => {
         ans = ans.toUpperCase() || 'Y';
         if (ans === 'Y') {
-          if (!fs.existsSync('./https_info')) {
-            fs.mkdirSync('./https_info');
-          }
           console.log('Generating https config file.');
           rl.question('Please enter pass phrase to use for the private key: ',
               (passPhrase) => {
@@ -49,7 +37,7 @@ function setupCert() {
                   stdio: 'inherit', stdin: 'inherit',
                 });
                 // write to config file
-                fs.writeFileSync('httpsConfig.json', JSON.stringify({
+                fs.writeFileSync('./config/httpsConfig.json', JSON.stringify({
                   key: './https_info/server.key',
                   cert: './https_info/server.cert',
                   passphrase: passPhrase,
@@ -72,11 +60,12 @@ function setupCert() {
                   (passPhrase) => {
                     console.log('Generating https config file.');
                     // write locations to config file
-                    fs.writeFileSync('httpsConfig.json', JSON.stringify({
-                      key: keyPath,
-                      cert: certPath,
-                      passphrase: passPhrase,
-                    }));
+                    fs.writeFileSync('./config/httpsConfig.json',
+                        JSON.stringify({
+                          key: keyPath,
+                          cert: certPath,
+                          passphrase: passPhrase,
+                        }));
                     console.log('Generated https config file...');
                     rl.close();
                   });
@@ -86,25 +75,13 @@ function setupCert() {
       });
 }
 
-connection.connect((err) => {
-  if (err) {
-    throw err;
-  }
-  console.log('Connected to database...');
-  // run initial database setup
-  const dbSetupQueries = fs.readFileSync(dbSetupFile, {encoding: 'utf8'});
-  console.log('Running setup queries:');
-  console.log(dbSetupQueries);
-  connection.query(dbSetupQueries, (err) => {
-    if (err) {
-      throw err;
-    }
-    console.log('Database setup complete.');
-    connection.end((err) => {
-      if (err) {
-        throw err;
-      }
-      setupCert(); // setup TLS/SSL
-    });
-  });
-});
+if (!fs.existsSync('./config/dbConfig.json')) {
+  fs.writeFileSync('./config/dbConfig.json', JSON.stringify({
+    host: 'localhost',
+    user: 'bank',
+    password: 'bankers4life!',
+    database: 'bank_web_app',
+  }));
+}
+
+setupCert();

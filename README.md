@@ -12,30 +12,8 @@ Pre-requisites:
 
 To setup this app, first install MySQL in the most convenient method for your platform.
 A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/installing.html
-Once this is done, an account and a database must be created for this app. This can be done through a MySQL shell session.
-A user can then be created like so:
-
-```
-CREATE USER 'bank'@'localhost' IDENTIFIED BY 'bankpassword';
-```
-
-Newer versions of MySQL may require 'mysql_native_password' be used for the app to function properly:
-
-```
-CREATE USER 'bank'@'localhost' IDENTIFIED WITH mysql_native_password BY 'bankpassword';
-```
-
-A database can then created by using:
-
-```
-CREATE DATABASE banking_web_app;
-```
-
-Then, the previously created user can be given access to the database via:
-
-```
-GRANT ALL PRIVILEGES ON banking_web_app.* TO 'bank'@'localhost';
-```
+Once this is done, the file "dbcreate.sql" contains statements to run for the apps default configuration.
+This can be run by first opening a mysql shell with root privileges and running ```source createdb.sql```.
 
 Finally, navigate to the directory containing this repository's package.json file and run the following:
 

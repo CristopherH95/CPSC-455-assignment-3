@@ -1,6 +1,5 @@
 node_modules/
-data/database.sqlite3
 dbConfig.json
-https_info/server.cert
-https_info/server.key
+https_info/
 httpsConfig.json
+config/

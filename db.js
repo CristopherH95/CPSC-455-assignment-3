@@ -5,7 +5,7 @@ const mysql2 = require('mysql2');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const dbConfig = JSON.parse(
-    fs.readFileSync('./dbConfig.json', {encoding: 'utf8'})
+    fs.readFileSync('./config/dbConfig.json', {encoding: 'utf8'})
 );
 if (!dbConfig || !dbConfig.host || !dbConfig.user
     || !dbConfig.password || !dbConfig.database) {
@@ -105,7 +105,7 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(runner.sql + ' with args (' + userId + ')');
           });
         },
         enumerable: true,
@@ -127,7 +127,7 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(runner.sql + ' with args (' + userId + ')');
           });
         },
         enumerable: true,
@@ -150,7 +150,7 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(runner.sql + ' with args (' + userId + ')');
           });
         },
         enumerable: true,
@@ -172,7 +172,9 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(
+                runner.sql + ' with args (' + [accountId, userId].join() + ')'
+            );
           });
         },
         enumerable: true,
@@ -201,7 +203,10 @@ let db = Object.defineProperties(
                   }
                 });
                 console.log('QUERY');
-                console.log(runner.sql);
+                console.log(runner.sql + ' with args (' + [userObj.user_id,
+                  hash, userObj.first_name,
+                  userObj.last_name, userObj.street, userObj.city,
+                  userObj.country_state, userObj.country].join() + ')');
               }
             });
           });
@@ -227,7 +232,9 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(runner.sql + ' with args (' + [accountObj.bank_user_id,
+              accountObj.account_type,
+              accountObj.balance].join() + ')');
           });
         },
         enumerable: true,
@@ -249,7 +256,10 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(
+                runner.sql + ' with args (' +
+                [newBalance, accountId].join() + ')'
+            );
           });
         },
         enumerable: true,
@@ -302,7 +312,7 @@ let db = Object.defineProperties(
                   }
                 });
             console.log('QUERY');
-            console.log(runner.sql);
+            console.log(runner.sql + ' with args (' + userId + ')');
           });
         },
       },
