@@ -15,6 +15,10 @@ A page with help can be found here: https://dev.mysql.com/doc/refman/8.0/en/inst
 Once this is done, the file "createdb.sql" contains statements to run for the apps default configuration.
 This can be run by first opening a mysql shell with root privileges and running ```source createdb.sql```.
 
+NOTE: the mysql_native_password plugin (present on newer versions of MySQL) will be tried when trying to create a new database user.
+      If this fails another query will attempt to create the user without the plugin.
+      This may cause a syntax error to appear for the first query, but the setup should still complete.
+
 Finally, navigate to the directory containing this repository's package.json file and run the following:
 
 ```
